@@ -170,13 +170,13 @@ class Paths
 	}
 
 	inline static public function sound(key:String, ?modsAllowed:Bool = true):Sound
-		return returnSound('sounds/$key', modsAllowed);
+		return returnSound('sounds/$key', null, modsAllowed);
 
 	inline static public function soundRandom(key:String, min:Int, max:Int, ?modsAllowed:Bool = true)
 		return sound(key + FlxG.random.int(min, max), modsAllowed);
 
 	inline static public function music(key:String, ?modsAllowed:Bool = true):Sound
-		return returnSound('music/$key', modsAllowed);
+		return returnSound('music/$key', null, modsAllowed);
 
 	inline static public function inst(song:String, ?modsAllowed:Bool = true):Any
 	{
@@ -426,16 +426,22 @@ class Paths
 	{
 		var file:String = getPath(key + '.$SOUND_EXT', SOUND, path, modsAllowed);
 
-		//trace('precaching sound: $file');
+		#if MODS_ALLOWED
+		var modFile:String = '';
+		if (path != null) modFile = '$path/';
+		modFile = modFolders(modFile + key + '.$SOUND_EXT');
+		if(FileSystem.exists(modFile)) {
+			if(!currentTrackedSounds.exists(modFile))
+				currentTrackedSounds.set(modFile, Sound.fromFile(modFile));
+			localTrackedAssets.push(modFile);
+			return currentTrackedSounds.get(modFile);
+		}
+		#end
+
 		if(!currentTrackedSounds.exists(file))
 		{
-			#if sys
-			if(FileSystem.exists(file))
-				currentTrackedSounds.set(file, Sound.fromFile(file));
-			#else
 			if(OpenFlAssets.exists(file, SOUND))
 				currentTrackedSounds.set(file, OpenFlAssets.getSound(file));
-			#end
 			else if(beepOnNull)
 			{
 				trace('SOUND NOT FOUND: $key, PATH: $path');
