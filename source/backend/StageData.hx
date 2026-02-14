@@ -7,7 +7,7 @@ import backend.Song;
 typedef StageFile = {
 	var directory:String;
 	var defaultZoom:Float;
-	var isPixelStage:Bool;
+	@:optional var isPixelStage:Null<Bool>; // PE104 compatibility
 	var stageUI:String;
 
 	var boyfriend:Array<Dynamic>;
@@ -19,6 +19,10 @@ typedef StageFile = {
 	var camera_opponent:Array<Float>;
 	var camera_girlfriend:Array<Float>;
 	var camera_speed:Null<Float>;
+
+	@:optional var preload:Dynamic; // PE104 compatibility
+	@:optional var objects:Array<Dynamic>; // PE104 compatibility
+	@:optional var _editorMeta:Dynamic; // PE104 compatibility
 }
 
 class StageData {
@@ -27,7 +31,6 @@ class StageData {
 		return {
 			directory: "",
 			defaultZoom: 0.9,
-			isPixelStage: false,
 			stageUI: "normal",
 
 			boyfriend: [770, 100],
@@ -38,70 +41,47 @@ class StageData {
 			camera_boyfriend: [0, 0],
 			camera_opponent: [0, 0],
 			camera_girlfriend: [0, 0],
-			camera_speed: 1
+			camera_speed: 1,
+
+			_editorMeta: {
+				gf: "gf",
+				dad: "dad",
+				boyfriend: "bf"
+			}
 		};
 	}
 
 	public static var forceNextDirectory:String = null;
 	public static function loadDirectory(SONG:SwagSong) {
 		var stage:String = '';
-		if(SONG.stage != null) {
+		if(SONG.stage != null)
 			stage = SONG.stage;
-		} else if(SONG.song != null) {
-			switch (SONG.song.toLowerCase().replace(' ', '-'))
-			{
-				case 'spookeez' | 'south' | 'monster':
-					stage = 'spooky';
-				case 'pico' | 'blammed' | 'philly' | 'philly-nice':
-					stage = 'philly';
-				case 'milf' | 'satin-panties' | 'high':
-					stage = 'limo';
-				case 'cocoa' | 'eggnog':
-					stage = 'mall';
-				case 'winter-horrorland':
-					stage = 'mallEvil';
-				case 'senpai' | 'roses':
-					stage = 'school';
-				case 'thorns':
-					stage = 'schoolEvil';
-				case 'ugh' | 'guns' | 'stress':
-					stage = 'tank';
-				default:
-					stage = 'stage';
-			}
-		} else {
+		else if(Song.loadedSongName != null)
+			stage = vanillaSongStage(Paths.formatToSongPath(Song.loadedSongName));
+		else
 			stage = 'stage';
-		}
 
 		var stageFile:StageFile = getStageFile(stage);
-		if(stageFile == null) { //preventing crashes
-			forceNextDirectory = '';
-		} else {
-			forceNextDirectory = stageFile.directory;
-		}
+		forceNextDirectory = (stageFile != null) ? stageFile.directory : ''; //preventing crashes
 	}
 
 	public static function getStageFile(stage:String):StageFile {
-		var rawJson:String = null;
-		var path:String = Paths.getSharedPath('stages/' + stage + '.json');
-
-		#if MODS_ALLOWED
-		var modPath:String = Paths.modFolders('stages/' + stage + '.json');
-		if(FileSystem.exists(modPath)) {
-			rawJson = File.getContent(modPath);
-		} else if(FileSystem.exists(path)) {
-			rawJson = File.getContent(path);
-		}
-		#else
-		if(Assets.exists(path)) {
-			rawJson = Assets.getText(path);
-		}
-		#end
-		else
+		try
 		{
-			return null;
+			var path:String = Paths.getPath('stages/' + stage + '.json', TEXT, null, true);
+			#if MODS_ALLOWED
+			if(FileSystem.exists(path))
+				return cast tjson.TJSON.parse(File.getContent(path));
+			#else
+			if(Assets.exists(path))
+				return cast tjson.TJSON.parse(Assets.getText(path));
+			#end
 		}
-		return cast tjson.TJSON.parse(rawJson);
+		catch(e:Dynamic)
+		{
+			trace('Error loading stage file: $stage - $e');
+		}
+		return dummy();
 	}
 
 	public static function vanillaSongStage(songName):String

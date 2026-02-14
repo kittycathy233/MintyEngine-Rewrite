@@ -2405,9 +2405,8 @@ class ChartingState extends MusicBeatState
 		curRenderedNotes.forEachAlive(function(note:Note) {
 			note.alpha = 1;
 			if(curSelectedNote != null) {
-				var noteDataToCheck:Int = note.noteData;
+			var noteDataToCheck:Int = note.noteData;
 				if(noteDataToCheck > -1 && note.mustPress != _song.notes[curSec].mustHitSection) noteDataToCheck += 4;
-
 				if (curSelectedNote[0] == note.strumTime && ((curSelectedNote[2] == null && noteDataToCheck < 0) || (curSelectedNote[2] != null && curSelectedNote[1] == noteDataToCheck)))
 				{
 					colorSine += elapsed;
@@ -2419,10 +2418,10 @@ class ChartingState extends MusicBeatState
 			if(note.strumTime <= Conductor.songPosition) {
 				note.alpha = 0.4;
 				if(note.strumTime > lastConductorPos && FlxG.sound.music.playing && note.noteData > -1) {
-					var data:Int = note.noteData % 4;
+				var data:Int = note.noteData % 4;
 					var noteDataToCheck:Int = note.noteData;
 					if(noteDataToCheck > -1 && note.mustPress != _song.notes[curSec].mustHitSection) noteDataToCheck += 4;
-						strumLineNotes.members[noteDataToCheck].playAnim('confirm', true);
+					strumLineNotes.members[noteDataToCheck].playAnim('confirm', true);
 						strumLineNotes.members[noteDataToCheck].resetAnim = ((note.sustainLength / 1000) + 0.15) / playbackSpeed;
 					if(!playedSound[data]) {
 						if(note.hitsoundChartEditor && ((playSoundBf.checked && note.mustPress) || (playSoundDad.checked && !note.mustPress)))
@@ -2435,7 +2434,7 @@ class ChartingState extends MusicBeatState
 							playedSound[data] = true;
 						}
 
-						data = note.noteData;
+					data = note.noteData;
 						if(note.mustPress != _song.notes[curSec].mustHitSection)
 						{
 							data += 4;
