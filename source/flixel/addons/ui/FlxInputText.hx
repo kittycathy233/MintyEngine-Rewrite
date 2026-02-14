@@ -760,6 +760,19 @@ class FlxInputText extends FlxText
 					caret.pixels.fillRect(r, caretC); // draw caret
 					caret.offset.x = caret.offset.y = 0;
 
+				case SHADOW_XY(offsetX, offsetY):
+					// Custom shadow offset
+					cw += Std.int(Math.abs(offsetX));
+					ch += Std.int(Math.abs(offsetY));
+					caret.makeGraphic(cw, ch, FlxColor.TRANSPARENT, false, caretKey);
+					var r:Rectangle = new Rectangle(Math.abs(offsetX), Math.abs(offsetY), caretWidth, Std.int(size + 2));
+					caret.pixels.fillRect(r, borderC); // draw shadow
+					r.x = offsetX < 0 ? 0 : 0;
+					r.y = offsetY < 0 ? 0 : 0;
+					caret.pixels.fillRect(new Rectangle(offsetX < 0 ? Math.abs(offsetX) : 0, offsetY < 0 ? Math.abs(offsetY) : 0, caretWidth, Std.int(size + 2)), caretC); // draw caret
+					caret.offset.x = offsetX < 0 ? Math.abs(offsetX) : 0;
+					caret.offset.y = offsetY < 0 ? Math.abs(offsetY) : 0;
+
 				case OUTLINE_FAST, OUTLINE:
 					// Border all around it
 					cw += Std.int(borderSize * 2);

@@ -199,7 +199,11 @@ class MusicPlayer extends FlxGroup
 		}
 		updatePlaybackTxt();
 
+		#if mobile
 		if (instance.touchPad.buttonC.justPressed || instance.controls.RESET)
+		#else
+		if (instance.controls.RESET)
+		#end
 		{
 			playbackRate = 1;
 			setPlaybackRate();

@@ -23,7 +23,7 @@ import states.TitleState;
 	public var vsync:Bool = false;
 	public var gameOverVibration:Bool = false;
 
-	public var downScroll:Bool = false;
+	public var downScroll:Bool = true;
 	public var middleScroll:Bool = false;
 	public var opponentStrums:Bool = true;
 	public var showFPS:Bool = true;
@@ -36,7 +36,7 @@ import states.TitleState;
 	public var lowQuality:Bool = false;
 	public var shaders:Bool = true;
 	public var cacheOnGPU:Bool = #if !switch false #else true #end; //From Stilic
-	public var framerate:Int = 60;
+	public var framerate:Int = 120;
 	public var camZooms:Bool = true;
 	public var hideHud:Bool = false;
 	public var noteOffset:Int = 0;
@@ -84,6 +84,7 @@ import states.TitleState;
 
 	public var comboOffset:Array<Int> = [0, 0, 0, 0];
 	public var ratingOffset:Int = 0;
+	public var perfectWindow:Int = 20;
 	public var sickWindow:Int = 45;
 	public var goodWindow:Int = 90;
 	public var badWindow:Int = 135;
@@ -99,10 +100,10 @@ class ClientPrefs {
 	//Every key has two binds, add your key bind down here and then add your control on options/ControlsSubState.hx and Controls.hx
 	public static var keyBinds:Map<String, Array<FlxKey>> = [
 		//Key Bind, Name for ControlsSubState
-		'note_up'		=> [W, UP],
-		'note_left'		=> [A, LEFT],
-		'note_down'		=> [S, DOWN],
-		'note_right'	=> [D, RIGHT],
+		'note_left'		=> [D, LEFT],
+		'note_down'		=> [F, DOWN],
+		'note_up'		=> [J, UP],
+		'note_right'	=> [K, RIGHT],
 		
 		'ui_up'			=> [W, UP],
 		'ui_left'		=> [A, LEFT],

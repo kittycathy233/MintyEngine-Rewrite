@@ -5,6 +5,8 @@ import openfl.text.TextField;
 import openfl.text.TextFormat;
 import openfl.system.System as OpenFlSystem;
 import lime.system.System as LimeSystem;
+import openfl.display.Sprite;
+import openfl.display.Shape;
 
 /**
 	The FPS class provides an easy-to-use monitor to display
@@ -19,7 +21,7 @@ import lime.system.System as LimeSystem;
 @:headerInclude('sys/utsname.h')
 #end
 #end
-class FPSCounter extends TextField
+class FPSCounter extends Sprite
 {
 	/**
 		The current frame rate, expressed using frames-per-second
@@ -34,26 +36,39 @@ class FPSCounter extends TextField
 	@:noCompletion private var times:Array<Float>;
 
 	public var os:String = '';
+	public var peakMemory:Float = 0;
+
+	var textField:TextField;
+	var bg:Shape;
 
 	public function new(x:Float = 10, y:Float = 10, color:Int = 0x000000)
 	{
 		super();
 
 		if (LimeSystem.platformName == LimeSystem.platformVersion || LimeSystem.platformVersion == null)
-			os = '\nOS: ${LimeSystem.platformName}' #if cpp + ' ${getArch() != 'Unknown' ? getArch() : ''}' #end;
+			os = '\n${LimeSystem.platformName}' #if cpp + ' ${getArch() != 'Unknown' ? getArch() : ''}' #end;
 		else
-			os = '\nOS: ${LimeSystem.platformName}' #if cpp + ' ${getArch() != 'Unknown' ? getArch() : ''}' #end + ' - ${LimeSystem.platformVersion}';
+			os = '\n${LimeSystem.platformName}' #if cpp + ' ${getArch() != 'Unknown' ? getArch() : ''}' #end + ' - ${LimeSystem.platformVersion}';
+
+		// 背景 - 50%透明度
+		bg = new Shape();
+		bg.alpha = 0.5;
+		addChild(bg);
+
+		// 文本 - 完全不透明
+		textField = new TextField();
+		textField.selectable = false;
+		textField.mouseEnabled = false;
+		textField.defaultTextFormat = new TextFormat(Paths.font("HarmonyOS_Sans_Bold.ttf"), 14, color, true);
+		textField.width = 200;
+		textField.height = 60;
+		textField.multiline = true;
+		textField.text = "FPS: ";
+		addChild(textField);
 
 		positionFPS(x, y);
 
 		currentFPS = 0;
-		selectable = false;
-		mouseEnabled = false;
-		defaultTextFormat = new TextFormat("_sans", 14, color);
-		width = FlxG.width;
-		multiline = true;
-		text = "FPS: ";
-
 		times = [];
 	}
 
@@ -79,14 +94,26 @@ class FPSCounter extends TextField
 
 	public dynamic function updateText():Void // so people can override it in hscript
 	{
-		text = 
-		'FPS: $currentFPS' + 
-		'\nMemory: ${flixel.util.FlxStringUtil.formatBytes(memoryMegas)}' +
+		var currentMem = memoryMegas;
+		if (currentMem > peakMemory) peakMemory = currentMem;
+		
+		textField.text = 
+		'${currentFPS} FPS  MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)} - ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}' +
 		os;
 
-		textColor = 0xFFFFFFFF;
+		// 自动调整背景大小
+		textField.width = textField.textWidth + 10;
+		textField.height = textField.textHeight + 4;
+
+		// 更新背景
+		bg.graphics.clear();
+		bg.graphics.beginFill(0x000000);
+		bg.graphics.drawRect(0, 0, textField.width, textField.height);
+		bg.graphics.endFill();
+
+		textField.textColor = 0xFFFFFFFF;
 		if (currentFPS < FlxG.drawFramerate * 0.5)
-			textColor = 0xFFFF0000;
+			textField.textColor = 0xFFFF0000;
 	}
 
 	inline function get_memoryMegas():Float

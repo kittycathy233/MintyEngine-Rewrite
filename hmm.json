@@ -5,22 +5,22 @@
       "type": "git",
       "dir": null,
       "ref": "main",
-      "url": "https://github.com/AlafandyPorting/lime-0.7.3"
+      "url": "https://github.com/kittycathy233/lime-pe073T"
     },
     {
       "name": "openfl",
       "type": "haxelib",
-      "version": "9.3.2"
+      "version": "9.5.0"
     },
     {
       "name": "flixel",
       "type": "haxelib",
-      "version": "5.5.0"
+      "version": "5.9.0"
     },
     {
       "name": "flixel-addons",
       "type": "haxelib",
-      "version": "3.2.1"
+      "version": "4.0.1"
     },
     {
       "name": "flixel-tools",
@@ -30,14 +30,14 @@
     {
       "name": "flixel-ui",
       "type": "haxelib",
-      "version": "2.5.0"
+      "version": "2.6.4"
     },
     {
       "name": "hxcpp",
       "type": "git",
       "dir": null,
       "ref": "main",
-      "url": "https://github.com/AlafandyPorting/hxcpp"
+      "url": "https://github.com/kittycathy233/hxcpp-pe073T"
     },
     {
       "name": "hxCodec",

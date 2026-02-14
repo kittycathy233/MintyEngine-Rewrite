@@ -34,6 +34,10 @@ class FreeplayState extends MusicBeatState
 	private var curPlaying:Bool = false;
 
 	private var iconArray:Array<HealthIcon> = [];
+	
+	// 音乐播放状态下的动画目标位置
+	var playingMusicTargetX:Float = 0;
+	var playingMusicIconOffset:Float = 100;
 
 	var bg:FlxSprite;
 	var intendedColor:Int;
@@ -671,21 +675,70 @@ class FreeplayState extends MusicBeatState
 			grpSongs.members[i].visible = grpSongs.members[i].active = false;
 			iconArray[i].visible = iconArray[i].active = false;
 		}
-		_lastVisibles = [];
+		
+		var newVisibles:Array<Int> = [];
 
 		var min:Int = Math.round(Math.max(0, Math.min(songs.length, lerpSelected - _drawDistance)));
 		var max:Int = Math.round(Math.max(0, Math.min(songs.length, lerpSelected + _drawDistance)));
 		for (i in min...max)
 		{
 			var item:Alphabet = grpSongs.members[i];
+			var isNew:Bool = !_lastVisibles.contains(i);
 			item.visible = item.active = true;
-			item.x = ((item.targetY - lerpSelected) * item.distancePerItem.x) + item.startPosition.x;
-			item.y = ((item.targetY - lerpSelected) * 1.3 * item.distancePerItem.y) + item.startPosition.y;
+			
+			// 计算默认位置
+			var defaultX:Float = ((item.targetY - lerpSelected) * item.distancePerItem.x) + item.startPosition.x;
+			var defaultY:Float = ((item.targetY - lerpSelected) * 1.3 * item.distancePerItem.y) + item.startPosition.y;
+			
+			// 播放音乐状态下，选中的歌曲移动到屏幕中间
+			if (player.playingMusic && i == curSelected)
+			{
+				var targetX:Float = (FlxG.width - item.width) / 2;
+				var targetY:Float = FlxG.height * 0.44;
+				if (isNew)
+				{
+					item.x = targetX;
+					item.y = targetY;
+				}
+				else
+				{
+					item.x = FlxMath.lerp(targetX, item.x, Math.exp(-elapsed * 9.6));
+					item.y = FlxMath.lerp(targetY, item.y, Math.exp(-elapsed * 9.6));
+				}
+			}
+			else
+			{
+				// 新出现的项直接设置位置，避免从错误位置 lerp 过来
+				if (isNew)
+				{
+					item.x = defaultX;
+					item.y = defaultY;
+				}
+				else
+				{
+					item.x = FlxMath.lerp(defaultX, item.x, Math.exp(-elapsed * 9.6));
+					item.y = FlxMath.lerp(defaultY, item.y, Math.exp(-elapsed * 9.6));
+				}
+			}
 
 			var icon:HealthIcon = iconArray[i];
 			icon.visible = icon.active = true;
-			_lastVisibles.push(i);
+			var iconDefaultX:Float = item.x + item.width + 12;
+			var iconDefaultY:Float = item.y - 30;
+			if (isNew)
+			{
+				icon.x = iconDefaultX;
+				icon.y = iconDefaultY;
+			}
+			else
+			{
+				icon.x = FlxMath.lerp(iconDefaultX, icon.x, Math.exp(-elapsed * 9.6));
+				icon.y = FlxMath.lerp(iconDefaultY, icon.y, Math.exp(-elapsed * 9.6));
+			}
+			
+			newVisibles.push(i);
 		}
+		_lastVisibles = newVisibles;
 	}
 
 	override function destroy():Void
