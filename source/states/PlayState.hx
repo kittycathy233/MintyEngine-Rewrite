@@ -94,7 +94,7 @@ class PlayState extends MusicBeatState
 	];
 
 	//event variables
-	private var isCameraOnForcedPos:Bool = false;
+	public var isCameraOnForcedPos:Bool = false;
 
 	public var boyfriendMap:Map<String, Character> = new Map<String, Character>();
 	public var dadMap:Map<String, Character> = new Map<String, Character>();
@@ -171,6 +171,7 @@ class PlayState extends MusicBeatState
 	public var camZooming:Bool = false;
 	public var camZoomingMult:Float = 1;
 	public var camZoomingDecay:Float = 1;
+	public var targetZoom:Float = 1;
 	private var curSong:String = "";
 
 	public var gfSpeed:Int = 1;
@@ -265,12 +266,16 @@ class PlayState extends MusicBeatState
 	public var startCallback:Void->Void = null;
 	public var endCallback:Void->Void = null;
 
+	public var eventHandler:EventHandler;
+
 	#if mobile
 	public var luaTouchPad:TouchPad;
 	#end
 
 	override public function create()
 	{
+		eventHandler = new EventHandler(this);
+
 		//trace('Playback Rate: ' + playbackRate);
 		Paths.clearStoredMemory();
 
@@ -1268,7 +1273,7 @@ class PlayState extends MusicBeatState
 
 	var debugNum:Int = 0;
 	private var noteTypes:Array<String> = [];
-	private var eventsPushed:Array<String> = [];
+	public var eventsPushed:Array<String> = [];
 	private function generateSong(dataPath:String):Void
 	{
 		// FlxG.log.add(ChartParser.parse());
@@ -1437,51 +1442,16 @@ class PlayState extends MusicBeatState
 
 	// called only once per different event (Used for precaching)
 	function eventPushed(event:EventNote) {
-		eventPushedUnique(event);
-		if(eventsPushed.contains(event.event)) {
-			return;
-		}
-
-		stagesFunc(function(stage:BaseStage) stage.eventPushed(event));
-		eventsPushed.push(event.event);
+		eventHandler.eventPushed(event);
 	}
 
 	// called by every event with the same name
 	function eventPushedUnique(event:EventNote) {
-		switch(event.event) {
-			case "Change Character":
-				var charType:Int = 0;
-				switch(event.value1.toLowerCase()) {
-					case 'gf' | 'girlfriend' | '1':
-						charType = 2;
-					case 'dad' | 'opponent' | '0':
-						charType = 1;
-					default:
-						var val1:Int = Std.parseInt(event.value1);
-						if(Math.isNaN(val1)) val1 = 0;
-						charType = val1;
-				}
-
-				var newCharacter:String = event.value2;
-				addCharacterToList(newCharacter, charType);
-
-			case 'Play Sound':
-				Paths.sound(event.value1); //Precache sound
-		}
-		stagesFunc(function(stage:BaseStage) stage.eventPushedUnique(event));
+		eventHandler.eventPushedUnique(event);
 	}
 
 	function eventEarlyTrigger(event:EventNote):Float {
-		var returnedValue:Null<Float> = callOnScripts('eventEarlyTrigger', [event.event, event.value1, event.value2, event.strumTime], true, [], [0]);
-		if(returnedValue != null && returnedValue != 0 && returnedValue != LuaUtils.Function_Continue) {
-			return returnedValue;
-		}
-
-		switch(event.event) {
-			case 'Kill Henchmen': //Better timing so that the kill sound matches the beat intended
-				return 280; //Plays 280ms before the actual position
-		}
-		return 0;
+		return eventHandler.eventEarlyTrigger(event);
 	}
 
 	public static function sortByTime(Obj1:Dynamic, Obj2:Dynamic):Int
@@ -1493,11 +1463,13 @@ class PlayState extends MusicBeatState
 			strumTime: event[0] + ClientPrefs.data.noteOffset,
 			event: event[1][i][0],
 			value1: event[1][i][1],
-			value2: event[1][i][2]
+			value2: event[1][i][2],
+			value3: event[1][i][3],
+			value4: event[1][i][4]
 		};
 		eventNotes.push(subEvent);
 		eventPushed(subEvent);
-		callOnScripts('onEventPushed', [subEvent.event, subEvent.value1 != null ? subEvent.value1 : '', subEvent.value2 != null ? subEvent.value2 : '', subEvent.strumTime]);
+		callOnScripts('onEventPushed', [subEvent.event, subEvent.value1 != null ? subEvent.value1 : '', subEvent.value2 != null ? subEvent.value2 : '', subEvent.value3 != null ? subEvent.value3 : '', subEvent.value4 != null ? subEvent.value4 : '', subEvent.strumTime]);
 	}
 
 	public var skipArrowStartTween:Bool = false; //for lua
@@ -1737,7 +1709,7 @@ class PlayState extends MusicBeatState
 		if (camZooming)
 		{
 			FlxG.camera.zoom = FlxMath.lerp(defaultCamZoom, FlxG.camera.zoom, Math.exp(-elapsed * 3.125 * camZoomingDecay * playbackRate));
-			camHUD.zoom = FlxMath.lerp(1, camHUD.zoom, Math.exp(-elapsed * 3.125 * camZoomingDecay * playbackRate));
+			camHUD.zoom = FlxMath.lerp(targetZoom, camHUD.zoom, Math.exp(-elapsed * 3.125 * camZoomingDecay * playbackRate));
 		}
 
 		FlxG.watch.addQuick("secShit", curSection);
@@ -1982,264 +1954,11 @@ class PlayState extends MusicBeatState
 	}
 
 	public function checkEventNote() {
-		while(eventNotes.length > 0) {
-			var leStrumTime:Float = eventNotes[0].strumTime;
-			if(Conductor.songPosition < leStrumTime) {
-				return;
-			}
-
-			var value1:String = '';
-			if(eventNotes[0].value1 != null)
-				value1 = eventNotes[0].value1;
-
-			var value2:String = '';
-			if(eventNotes[0].value2 != null)
-				value2 = eventNotes[0].value2;
-
-			triggerEvent(eventNotes[0].event, value1, value2, leStrumTime);
-			eventNotes.shift();
-		}
+		eventHandler.checkEventNote();
 	}
 
-	public function triggerEvent(eventName:String, value1:String, value2:String, strumTime:Float) {
-		var flValue1:Null<Float> = Std.parseFloat(value1);
-		var flValue2:Null<Float> = Std.parseFloat(value2);
-		if(Math.isNaN(flValue1)) flValue1 = null;
-		if(Math.isNaN(flValue2)) flValue2 = null;
-
-		switch(eventName) {
-			case 'Hey!':
-				var value:Int = 2;
-				switch(value1.toLowerCase().trim()) {
-					case 'bf' | 'boyfriend' | '0':
-						value = 0;
-					case 'gf' | 'girlfriend' | '1':
-						value = 1;
-				}
-
-				if(flValue2 == null || flValue2 <= 0) flValue2 = 0.6;
-
-				if(value != 0) {
-					if(dad.curCharacter.startsWith('gf')) { //Tutorial GF is actually Dad! The GF is an imposter!! ding ding ding ding ding ding ding, dindinding, end my suffering
-						dad.playAnim('cheer', true);
-						dad.specialAnim = true;
-						dad.heyTimer = flValue2;
-					} else if (gf != null) {
-						gf.playAnim('cheer', true);
-						gf.specialAnim = true;
-						gf.heyTimer = flValue2;
-					}
-				}
-				if(value != 1) {
-					boyfriend.playAnim('hey', true);
-					boyfriend.specialAnim = true;
-					boyfriend.heyTimer = flValue2;
-				}
-
-			case 'Set GF Speed':
-				if(flValue1 == null || flValue1 < 1) flValue1 = 1;
-				gfSpeed = Math.round(flValue1);
-
-			case 'Add Camera Zoom':
-				if(ClientPrefs.data.camZooms && FlxG.camera.zoom < 1.35) {
-					if(flValue1 == null) flValue1 = 0.015;
-					if(flValue2 == null) flValue2 = 0.03;
-
-					FlxG.camera.zoom += flValue1;
-					camHUD.zoom += flValue2;
-				}
-
-			case 'Play Animation':
-				//trace('Anim to play: ' + value1);
-				var char:Character = dad;
-				switch(value2.toLowerCase().trim()) {
-					case 'bf' | 'boyfriend':
-						char = boyfriend;
-					case 'gf' | 'girlfriend':
-						char = gf;
-					default:
-						if(flValue2 == null) flValue2 = 0;
-						switch(Math.round(flValue2)) {
-							case 1: char = boyfriend;
-							case 2: char = gf;
-						}
-				}
-
-				if (char != null)
-				{
-					char.playAnim(value1, true);
-					char.specialAnim = true;
-				}
-
-			case 'Camera Follow Pos':
-				if(camFollow != null)
-				{
-					isCameraOnForcedPos = false;
-					if(flValue1 != null || flValue2 != null)
-					{
-						isCameraOnForcedPos = true;
-						if(flValue1 == null) flValue1 = 0;
-						if(flValue2 == null) flValue2 = 0;
-						camFollow.x = flValue1;
-						camFollow.y = flValue2;
-					}
-				}
-
-			case 'Alt Idle Animation':
-				var char:Character = dad;
-				switch(value1.toLowerCase().trim()) {
-					case 'gf' | 'girlfriend':
-						char = gf;
-					case 'boyfriend' | 'bf':
-						char = boyfriend;
-					default:
-						var val:Int = Std.parseInt(value1);
-						if(Math.isNaN(val)) val = 0;
-
-						switch(val) {
-							case 1: char = boyfriend;
-							case 2: char = gf;
-						}
-				}
-
-				if (char != null)
-				{
-					char.idleSuffix = value2;
-					char.recalculateDanceIdle();
-				}
-
-			case 'Screen Shake':
-				var valuesArray:Array<String> = [value1, value2];
-				var targetsArray:Array<FlxCamera> = [camGame, camHUD];
-				for (i in 0...targetsArray.length) {
-					var split:Array<String> = valuesArray[i].split(',');
-					var duration:Float = 0;
-					var intensity:Float = 0;
-					if(split[0] != null) duration = Std.parseFloat(split[0].trim());
-					if(split[1] != null) intensity = Std.parseFloat(split[1].trim());
-					if(Math.isNaN(duration)) duration = 0;
-					if(Math.isNaN(intensity)) intensity = 0;
-
-					if(duration > 0 && intensity != 0) {
-						targetsArray[i].shake(intensity, duration);
-					}
-				}
-
-
-			case 'Change Character':
-				var charType:Int = 0;
-				switch(value1.toLowerCase().trim()) {
-					case 'gf' | 'girlfriend':
-						charType = 2;
-					case 'dad' | 'opponent':
-						charType = 1;
-					default:
-						charType = Std.parseInt(value1);
-						if(Math.isNaN(charType)) charType = 0;
-				}
-
-				switch(charType) {
-					case 0:
-						if(boyfriend.curCharacter != value2) {
-							if(!boyfriendMap.exists(value2)) {
-								addCharacterToList(value2, charType);
-							}
-
-							var lastAlpha:Float = boyfriend.alpha;
-							boyfriend.alpha = 0.00001;
-							boyfriend = boyfriendMap.get(value2);
-							boyfriend.alpha = lastAlpha;
-							iconP1.changeIcon(boyfriend.healthIcon);
-						}
-						setOnScripts('boyfriendName', boyfriend.curCharacter);
-
-					case 1:
-						if(dad.curCharacter != value2) {
-							if(!dadMap.exists(value2)) {
-								addCharacterToList(value2, charType);
-							}
-
-							var wasGf:Bool = dad.curCharacter.startsWith('gf-') || dad.curCharacter == 'gf';
-							var lastAlpha:Float = dad.alpha;
-							dad.alpha = 0.00001;
-							dad = dadMap.get(value2);
-							if(!dad.curCharacter.startsWith('gf-') && dad.curCharacter != 'gf') {
-								if(wasGf && gf != null) {
-									gf.visible = true;
-								}
-							} else if(gf != null) {
-								gf.visible = false;
-							}
-							dad.alpha = lastAlpha;
-							iconP2.changeIcon(dad.healthIcon);
-						}
-						setOnScripts('dadName', dad.curCharacter);
-
-					case 2:
-						if(gf != null)
-						{
-							if(gf.curCharacter != value2)
-							{
-								if(!gfMap.exists(value2)) {
-									addCharacterToList(value2, charType);
-								}
-
-								var lastAlpha:Float = gf.alpha;
-								gf.alpha = 0.00001;
-								gf = gfMap.get(value2);
-								gf.alpha = lastAlpha;
-							}
-							setOnScripts('gfName', gf.curCharacter);
-						}
-				}
-				reloadHealthBarColors();
-
-			case 'Change Scroll Speed':
-				if (songSpeedType != "constant")
-				{
-					if(flValue1 == null) flValue1 = 1;
-					if(flValue2 == null) flValue2 = 0;
-
-					var newValue:Float = SONG.speed * ClientPrefs.getGameplaySetting('scrollspeed') * flValue1;
-					if(flValue2 <= 0)
-						songSpeed = newValue;
-					else
-						songSpeedTween = FlxTween.tween(this, {songSpeed: newValue}, flValue2 / playbackRate, {ease: FlxEase.linear, onComplete:
-							function (twn:FlxTween)
-							{
-								songSpeedTween = null;
-							}
-						});
-				}
-
-			case 'Set Property':
-				try
-				{
-					var split:Array<String> = value1.split('.');
-					if(split.length > 1) {
-						LuaUtils.setVarInArray(LuaUtils.getPropertyLoop(split), split[split.length-1], value2);
-					} else {
-						LuaUtils.setVarInArray(this, value1, value2);
-					}
-				}
-				catch(e:Dynamic)
-				{
-					var len:Int = e.message.indexOf('\n') + 1;
-					if(len <= 0) len = e.message.length;
-					#if (LUA_ALLOWED || HSCRIPT_ALLOWED)
-					addTextToDebug('ERROR ("Set Property" Event) - ' + e.message.substr(0, len), FlxColor.RED);
-					#else
-					FlxG.log.warn('ERROR ("Set Property" Event) - ' + e.message.substr(0, len));
-					#end
-				}
-
-			case 'Play Sound':
-				if(flValue2 == null) flValue2 = 1;
-				FlxG.sound.play(Paths.sound(value1), flValue2);
-		}
-
-		stagesFunc(function(stage:BaseStage) stage.eventCalled(eventName, value1, value2, flValue1, flValue2, strumTime));
-		callOnScripts('onEvent', [eventName, value1, value2, strumTime]);
+	public function triggerEvent(eventName:String, value1:String, value2:String, ?value3:String, ?value4:String, ?strumTime:Float) {
+		eventHandler.triggerEvent(eventName, value1, value2, value3, value4, strumTime);
 	}
 
 	function moveCameraSection(?sec:Null<Int>):Void {

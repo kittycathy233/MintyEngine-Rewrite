@@ -199,7 +199,7 @@ class Limo extends BaseStage
 		}
 	}
 
-	override function eventCalled(eventName:String, value1:String, value2:String, flValue1:Null<Float>, flValue2:Null<Float>, strumTime:Float)
+	override function eventCalled(eventName:String, value1:String, value2:String, flValue1:Null<Float>, flValue2:Null<Float>, strumTime:Float, ?value3:String, ?value4:String)
 	{
 		switch(eventName)
 		{
