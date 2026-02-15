@@ -670,18 +670,17 @@ class HScriptIris extends HScriptBase {
 	}
 
 	override public function call(funcToRun:String, ?args:Array<Dynamic>):Dynamic {
-		if (funcToRun == null) return null;
+		if (funcToRun == null) return {succeeded: false, returnValue: null};
 
 		try {
-			// 尝试通过反射调用函数
-			var result:Dynamic = iris.execute();
-			return {funName: funcToRun, returnValue: result};
+			var result:Dynamic = iris.call(funcToRun, args);
+			return {succeeded: true, returnValue: result};
 		} catch(e:Dynamic) {
 			if (FlxG.state != null && Type.getClassName(Type.getClass(FlxG.state)) == "PlayState") {
 				Reflect.callMethod(FlxG.state, Reflect.field(FlxG.state, "addTextToDebug"), ["Error calling function " + funcToRun + ": " + e, FlxColor.RED]);
 			}
 		}
-		return null;
+		return {succeeded: false, returnValue: null};
 	}
 
 	override public function exists(funcToRun:String):Bool {
