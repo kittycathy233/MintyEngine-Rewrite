@@ -7,6 +7,7 @@ import openfl.system.System as OpenFlSystem;
 import lime.system.System as LimeSystem;
 import openfl.display.Sprite;
 import openfl.display.Shape;
+import states.MainMenuState;
 
 /**
 	The FPS class provides an easy-to-use monitor to display
@@ -99,7 +100,8 @@ class FPSCounter extends Sprite
 		
 		textField.text = 
 		'${currentFPS} FPS  MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)} - ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}' +
-		os;
+		os +
+		'\nMinty ${MainMenuState.mintyEngineVersion}\nPsych ${MainMenuState.psychEngineVersion}';
 
 		// 自动调整背景大小
 		textField.width = textField.textWidth + 10;
