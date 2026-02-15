@@ -1982,30 +1982,31 @@ class ChartingState extends MusicBeatState
 			#end
 
 			if(curSelectedNote != null && curSelectedNote[1] > -1) {
-				#if mobile
-				if (touchPad.buttonDown2.justPressed || FlxG.keys.justPressed.E)
-				{
-					changeNoteSustain(Conductor.stepCrochet);
-				}
-				#else
-				if (FlxG.keys.justPressed.E)
-				{
-					changeNoteSustain(Conductor.stepCrochet);
-				}
-				#end
-
-				#if mobile
-				if (touchPad.buttonUp2.justPressed || FlxG.keys.justPressed.Q)
-				{
-					changeNoteSustain(-Conductor.stepCrochet);
-				}
-				#else
-				if (FlxG.keys.justPressed.Q)
-				{
-					changeNoteSustain(-Conductor.stepCrochet);
-				}
-				#end
+			var susChange:Float = Conductor.stepCrochet / 2;
+			#if mobile
+			if (touchPad.buttonDown2.justPressed || FlxG.keys.justPressed.E)
+			{
+				changeNoteSustain(susChange);
 			}
+			#else
+			if (FlxG.keys.justPressed.E)
+			{
+				changeNoteSustain(susChange);
+			}
+			#end
+
+			#if mobile
+			if (touchPad.buttonUp2.justPressed || FlxG.keys.justPressed.Q)
+			{
+				changeNoteSustain(-susChange);
+			}
+			#else
+			if (FlxG.keys.justPressed.Q)
+			{
+				changeNoteSustain(-susChange);
+			}
+			#end
+		}
 
 			#if mobile
 			if (FlxG.keys.justPressed.BACKSPACE || touchPad.buttonB.justPressed) {
@@ -2759,7 +2760,7 @@ class ChartingState extends MusicBeatState
 		{
 			if (curSelectedNote[2] != null)
 			{
-				curSelectedNote[2] += Math.ceil(value);
+				curSelectedNote[2] += value;
 				curSelectedNote[2] = Math.max(curSelectedNote[2], 0);
 			}
 		}
@@ -3121,12 +3122,31 @@ class ChartingState extends MusicBeatState
 	}
 
 	function setupSusNote(note:Note, beats:Float):FlxSprite {
-		var height:Int = Math.floor(FlxMath.remapToRange(note.sustainLength, 0, Conductor.stepCrochet * 16, 0, GRID_SIZE * 16 * zoomList[curZoom]) + (GRID_SIZE * zoomList[curZoom]) - GRID_SIZE / 2);
-		var minHeight:Int = Std.int((GRID_SIZE * zoomList[curZoom] / 2) + GRID_SIZE / 2);
-		if(height < minHeight) height = minHeight;
-		if(height < 1) height = 1; //Prevents error of invalid height
+		// Calculate sustain height based on stepCrochet like PE104
+		var curStepCrochet:Float = 60 / Conductor.bpm * 1000 / 4.0;
+		var susSteps:Float = note.sustainLength / curStepCrochet;
+		// Precise sustain height: step count * grid size * zoom
+		var height:Float = susSteps * GRID_SIZE * zoomList[curZoom];
+		var heightInt:Int = Math.round(height);
+		if(heightInt < 1) heightInt = 1; //Prevents error of invalid height
 
-		var spr:FlxSprite = new FlxSprite(note.x + (GRID_SIZE * 0.5) - 4, note.y + GRID_SIZE / 2).makeGraphic(8, height);
+		// Create sustain sprite with tail highlight (light red at the end)
+		var spr:FlxSprite = new FlxSprite(note.x + (GRID_SIZE * 0.5) - 4, note.y + GRID_SIZE / 2);
+		spr.makeGraphic(8, heightInt, 0xFFFFFFFF); // White base for coloring
+		
+		// Calculate tail height (3/4 of a step)
+		var tailHeight:Int = Math.round(GRID_SIZE * zoomList[curZoom] * 0.75);
+		if(tailHeight < 4) tailHeight = 4;
+		if(tailHeight > heightInt) tailHeight = heightInt;
+		
+		// Draw the sustain body (white)
+		spr.pixels.fillRect(new Rectangle(0, 0, 8, heightInt - tailHeight), 0xFFFFFFFF); // White body
+		
+		// Draw the tail highlight (more transparent light red)
+		var tailColor:FlxColor = 0xFFFF9999;
+		tailColor.alphaFloat = 0.25; // 25% opacity for tail
+		spr.pixels.fillRect(new Rectangle(0, heightInt - tailHeight, 8, tailHeight), tailColor);
+		
 		return spr;
 	}
 

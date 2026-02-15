@@ -392,8 +392,12 @@ class EditorPlayState extends MusicBeatSubstate
 
 		// NEW SHIT
 		noteData = songData.notes;
+		var daBpm:Float = Conductor.bpm;
 		for (section in noteData)
 		{
+			if (section.changeBPM && section.bpm > 0 && daBpm != section.bpm)
+				daBpm = section.bpm;
+
 			for (songNotes in section.sectionNotes)
 			{
 				var daStrumTime:Float = songNotes[0];
@@ -420,15 +424,15 @@ class EditorPlayState extends MusicBeatSubstate
 
 				unspawnNotes.push(swagNote);
 
-				final susLength:Float = swagNote.sustainLength / Conductor.stepCrochet;
-				final floorSus:Int = Math.floor(susLength);
-
-				if(floorSus > 0) {
-					for (susNote in 0...floorSus + 1)
+				var curStepCrochet:Float = 60 / daBpm * 1000 / 4.0;
+				final roundSus:Int = Math.round(swagNote.sustainLength / curStepCrochet);
+				if(roundSus > 0)
+				{
+					for (susNote in 0...roundSus)
 					{
 						oldNote = unspawnNotes[Std.int(unspawnNotes.length - 1)];
 
-						var sustainNote:Note = new Note(daStrumTime + (Conductor.stepCrochet * susNote), daNoteData, oldNote, true, this);
+						var sustainNote:Note = new Note(daStrumTime + (curStepCrochet * susNote), daNoteData, oldNote, true, this);
 						sustainNote.mustPress = gottaHitNote;
 						sustainNote.gfNote = (section.gfSection && (songNotes[1] < 4)); // PE073 logic
 						sustainNote.noteType = swagNote.noteType;
@@ -444,7 +448,7 @@ class EditorPlayState extends MusicBeatSubstate
 							{
 								oldNote.scale.y *= Note.SUSTAIN_SIZE / oldNote.frameHeight;
 								oldNote.scale.y /= playbackRate;
-								oldNote.updateHitbox();
+								oldNote.resizeByRatio(curStepCrochet / Conductor.stepCrochet);
 							}
 
 							if(ClientPrefs.data.downScroll)
@@ -453,7 +457,7 @@ class EditorPlayState extends MusicBeatSubstate
 						else if(oldNote.isSustainNote)
 						{
 							oldNote.scale.y /= playbackRate;
-							oldNote.updateHitbox();
+							oldNote.resizeByRatio(curStepCrochet / Conductor.stepCrochet);
 						}
 
 						if (sustainNote.mustPress) sustainNote.x += FlxG.width / 2; // general offset
