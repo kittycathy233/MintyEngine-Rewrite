@@ -26,6 +26,7 @@ class PauseSubState extends MusicBeatSubstate
 	var skipTimeText:FlxText;
 	var skipTimeTracker:Alphabet;
 	var curTime:Float = Math.max(0, Conductor.songPosition);
+	var formatText:FlxText;
 
 	var missingTextBG:FlxSprite;
 	var missingText:FlxText;
@@ -113,9 +114,25 @@ class PauseSubState extends MusicBeatSubstate
 		chartingText.visible = PlayState.chartingMode;
 		add(chartingText);
 
+		var formatStr:String = PlayState.SONG.format;
+		if(formatStr == null || formatStr.length < 1) formatStr = 'psych_legacy';
+		{
+			formatText = new FlxText(20, 15 + 64, 0, "FORMAT: " + formatStr, 32);
+			formatText.scrollFactor.set();
+			if(formatStr.indexOf('psych_v1') >= 0)
+				formatText.setFormat(Paths.font('vcr.ttf'), 32, FlxColor.fromRGB(135, 206, 250));
+			else
+				formatText.setFormat(Paths.font('vcr.ttf'), 32, FlxColor.WHITE);
+			formatText.x = FlxG.width - (formatText.width + 20);
+			formatText.y = 15 + 64 + 32 + 10;
+			formatText.updateHitbox();
+			add(formatText);
+		}
+
 		blueballedTxt.alpha = 0;
 		levelDifficulty.alpha = 0;
 		levelInfo.alpha = 0;
+		if(formatText != null) formatText.alpha = 0;
 
 		levelInfo.x = FlxG.width - (levelInfo.width + 20);
 		levelDifficulty.x = FlxG.width - (levelDifficulty.width + 20);
@@ -125,6 +142,10 @@ class PauseSubState extends MusicBeatSubstate
 		FlxTween.tween(levelInfo, {alpha: 1, y: 20}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.3});
 		FlxTween.tween(levelDifficulty, {alpha: 1, y: levelDifficulty.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.5});
 		FlxTween.tween(blueballedTxt, {alpha: 1, y: blueballedTxt.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.7});
+		if(formatText != null)
+		{
+			FlxTween.tween(formatText, {alpha: 1, y: formatText.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.9});
+		}
 
 		grpMenuShit = new FlxTypedGroup<Alphabet>();
 		add(grpMenuShit);
@@ -381,6 +402,7 @@ class PauseSubState extends MusicBeatSubstate
 	override function destroy()
 	{
 		pauseMusic.destroy();
+		if(formatText != null) formatText.destroy();
 
 		super.destroy();
 	}
