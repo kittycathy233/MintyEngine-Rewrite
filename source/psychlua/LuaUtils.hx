@@ -265,6 +265,11 @@ class LuaUtils
 		}
 		return false;
 	}
+
+	public static function isLuaSupported(value:Dynamic):Bool
+	{
+		return isOfTypes(value, [Bool, Int, Float, String, Array]);
+	}
 	
 	public static inline function getTargetInstance()
 	{

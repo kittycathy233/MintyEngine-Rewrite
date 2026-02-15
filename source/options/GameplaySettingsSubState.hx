@@ -60,6 +60,13 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		addOption(option);
 		option.onChange = onChangeVibration;
 
+		var option:Option = new Option('HScript Engine',
+			"Choose which HScript engine to use.\nSScript: Default engine.\nIris: Newer engine with better features.",
+			'hscriptEngine',
+			'string',
+			['SScript', 'Iris']);
+		addOption(option);
+
 		var option:Option = new Option('Hitsound Volume',
 			'Funny notes does \"Tick!\" when you hit them.',
 			'hitsoundVolume',

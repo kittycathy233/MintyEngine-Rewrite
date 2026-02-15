@@ -4,6 +4,8 @@ import flixel.addons.ui.FlxUIState;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.FlxState;
 import backend.PsychCamera;
+import Type;
+import Reflect;
 
 class MusicBeatState extends FlxUIState
 {
@@ -250,6 +252,14 @@ class MusicBeatState extends FlxUIState
 
 	public static function getState():MusicBeatState {
 		return cast (FlxG.state, MusicBeatState);
+	}
+
+	public static function getVariables():Dynamic {
+		var state:MusicBeatState = getState();
+		if (state != null && Type.getClassName(Type.getClass(state)) == "PlayState") {
+			return Reflect.field(state, "variables");
+		}
+		return null;
 	}
 
 	public function stepHit():Void

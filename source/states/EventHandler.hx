@@ -15,6 +15,13 @@ import psychlua.FunkinLua;
 import psychlua.HScript;
 #end
 
+enum CharacterType
+{
+	BOYFRIEND;
+	OPPONENT;
+	GIRLFRIEND;
+}
+
 class EventHandler
 {
 	public var playState:PlayState;
@@ -22,6 +29,42 @@ class EventHandler
 	public function new(playState:PlayState)
 	{
 		this.playState = playState;
+	}
+
+	private function parseCharacterType(value:String):CharacterType
+	{
+		if (value == null) return CharacterType.BOYFRIEND;
+		
+		var normalized = value.toLowerCase().trim();
+		
+		var numericValue = Std.parseInt(normalized);
+		if (!Math.isNaN(numericValue))
+		{
+			switch (numericValue)
+			{
+				case 0: return CharacterType.BOYFRIEND;
+				case 1: return CharacterType.OPPONENT;
+				case 2: return CharacterType.GIRLFRIEND;
+			}
+		}
+		
+		switch (normalized)
+		{
+			case 'bf' | 'boyfriend': return CharacterType.BOYFRIEND;
+			case 'dad' | 'opponent': return CharacterType.OPPONENT;
+			case 'gf' | 'girlfriend': return CharacterType.GIRLFRIEND;
+			default: return CharacterType.BOYFRIEND;
+		}
+	}
+
+	private function getCharacterByType(charType:CharacterType):Character
+	{
+		switch (charType)
+		{
+			case CharacterType.BOYFRIEND: return playState.boyfriend;
+			case CharacterType.OPPONENT: return playState.dad;
+			case CharacterType.GIRLFRIEND: return playState.gf;
+		}
 	}
 
 	public function eventPushed(event:EventNote)
@@ -44,21 +87,16 @@ class EventHandler
 		switch(event.event)
 		{
 			case "Change Character":
-				var charType:Int = 0;
-				switch(event.value1.toLowerCase())
+				var charType = parseCharacterType(event.value1);
+				var charTypeInt:Int = switch(charType)
 				{
-					case 'gf' | 'girlfriend' | '1':
-						charType = 2;
-					case 'dad' | 'opponent' | '0':
-						charType = 1;
-					default:
-						var val1:Int = Std.parseInt(event.value1);
-						if(Math.isNaN(val1)) val1 = 0;
-						charType = val1;
+					case CharacterType.BOYFRIEND: 0;
+					case CharacterType.OPPONENT: 1;
+					case CharacterType.GIRLFRIEND: 2;
 				}
-
+				
 				var newCharacter:String = event.value2;
-				playState.addCharacterToList(newCharacter, charType);
+				playState.addCharacterToList(newCharacter, charTypeInt);
 
 			case 'Play Sound':
 				Paths.sound(event.value1);
@@ -175,33 +213,21 @@ class EventHandler
 
 	private function triggerHeyEvent(value1:String, flValue2:Null<Float>)
 	{
-		var value:Int = 2;
-		switch(value1.toLowerCase().trim())
-		{
-			case 'bf' | 'boyfriend' | '0':
-				value = 0;
-			case 'gf' | 'girlfriend' | '1':
-				value = 1;
-		}
-
+		var charType = parseCharacterType(value1);
+		
 		if(flValue2 == null || flValue2 <= 0) flValue2 = 0.6;
 
-		if(value != 0)
+		if(charType != CharacterType.BOYFRIEND)
 		{
-			if(playState.dad.curCharacter.startsWith('gf'))
+			var targetChar = playState.dad.curCharacter.startsWith('gf') ? playState.dad : playState.gf;
+			if (targetChar != null)
 			{
-				playState.dad.playAnim('cheer', true);
-				playState.dad.specialAnim = true;
-				playState.dad.heyTimer = flValue2;
-			}
-			else if (playState.gf != null)
-			{
-				playState.gf.playAnim('cheer', true);
-				playState.gf.specialAnim = true;
-				playState.gf.heyTimer = flValue2;
+				targetChar.playAnim('cheer', true);
+				targetChar.specialAnim = true;
+				targetChar.heyTimer = flValue2;
 			}
 		}
-		if(value != 1)
+		if(charType != CharacterType.GIRLFRIEND)
 		{
 			playState.boyfriend.playAnim('hey', true);
 			playState.boyfriend.specialAnim = true;
@@ -230,20 +256,9 @@ class EventHandler
 	private function triggerPlayAnimationEvent(value1:String, value2:String, flValue2:Null<Float>)
 	{
 		var char:Character = playState.dad;
-		switch(value2.toLowerCase().trim())
-		{
-			case 'bf' | 'boyfriend':
-				char = playState.boyfriend;
-			case 'gf' | 'girlfriend':
-				char = playState.gf;
-			default:
-				if(flValue2 == null) flValue2 = 0;
-				switch(Math.round(flValue2))
-				{
-					case 1: char = playState.boyfriend;
-					case 2: char = playState.gf;
-				}
-		}
+		var charType = parseCharacterType(value2);
+		
+		char = getCharacterByType(charType);
 
 		if (char != null)
 		{
@@ -270,23 +285,8 @@ class EventHandler
 
 	private function triggerAltIdleAnimationEvent(value1:String, value2:String)
 	{
-		var char:Character = playState.dad;
-		switch(value1.toLowerCase().trim())
-		{
-			case 'gf' | 'girlfriend':
-				char = playState.gf;
-			case 'boyfriend' | 'bf':
-				char = playState.boyfriend;
-			default:
-				var val:Int = Std.parseInt(value1);
-				if(Math.isNaN(val)) val = 0;
-
-				switch(val)
-				{
-					case 1: char = playState.boyfriend;
-					case 2: char = playState.gf;
-				}
-		}
+		var charType = parseCharacterType(value1);
+		var char = getCharacterByType(charType);
 
 		if (char != null)
 		{
@@ -318,25 +318,15 @@ class EventHandler
 
 	private function triggerChangeCharacterEvent(value1:String, value2:String)
 	{
-		var charType:Int = 0;
-		switch(value1.toLowerCase().trim())
-		{
-			case 'gf' | 'girlfriend':
-				charType = 2;
-			case 'dad' | 'opponent':
-				charType = 1;
-			default:
-				charType = Std.parseInt(value1);
-				if(Math.isNaN(charType)) charType = 0;
-		}
-
+		var charType = parseCharacterType(value1);
+		
 		switch(charType)
 		{
-			case 0:
+			case CharacterType.BOYFRIEND:
 				changeBoyfriend(value2);
-			case 1:
+			case CharacterType.OPPONENT:
 				changeDad(value2);
-			case 2:
+			case CharacterType.GIRLFRIEND:
 				changeGF(value2);
 		}
 		playState.reloadHealthBarColors();
