@@ -121,6 +121,25 @@ class VisualsUISubState extends BaseOptionsMenu
 		addOption(option);
 		option.onChange = onChangeFPSCounter;
 
+		var option:Option = new Option('FPS Display Mode',
+			"How detailed should the FPS counter be?",
+			'fpsDisplayMode',
+			'string',
+			['Simple', 'Detailed', 'Advanced', 'Full']);
+		addOption(option);
+
+		var option:Option = new Option('Show OS in FPS',
+			'If checked, shows OS info in FPS counter.',
+			'showOSInFPS',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Show Engine Version',
+			'If checked, shows engine version in FPS counter.',
+			'showEngineVersion',
+			'bool');
+		addOption(option);
+
 		#if sys
 		var option:Option = new Option('VSync',
 			'If checked, Enables VSync fixing any screen tearing at the cost of capping the FPS to screen refresh rate.\n(Must restart the game to have an effect)',

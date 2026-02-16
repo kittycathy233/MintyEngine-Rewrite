@@ -8,6 +8,7 @@ import lime.system.System as LimeSystem;
 import openfl.display.Sprite;
 import openfl.display.Shape;
 import states.MainMenuState;
+import backend.ClientPrefs;
 
 /**
 	The FPS class provides an easy-to-use monitor to display
@@ -34,10 +35,62 @@ class FPSCounter extends Sprite
 	**/
 	public var memoryMegas(get, never):Float;
 
+	/**
+		Reserved memory (total allocated memory by GC)
+	**/
+	public var memoryReserved(get, never):Float;
+
+	/**
+		Current memory (currently allocated memory)
+	**/
+	public var memoryCurrent(get, never):Float;
+
+	/**
+		Large object memory
+	**/
+	public var memoryLarge(get, never):Float;
+
+	/**
+		Memory usage percentage
+	**/
+	public var memoryUsagePercent(get, never):Float;
+
+	/**
+		Average FPS over time
+	**/
+	public var averageFPS(default, null):Float;
+
+	/**
+		Minimum FPS recorded
+	**/
+	public var minFPS(default, null):Int;
+
+	/**
+		Maximum FPS recorded
+	**/
+	public var maxFPS(default, null):Int;
+
+	/**
+		Frame time in milliseconds
+	**/
+	public var frameTime(default, null):Float;
+
+	/**
+		Total frames rendered
+	**/
+	public var totalFrames(default, null):Int;
+
+	/**
+		Total runtime in seconds
+	**/
+	public var totalRuntime(default, null):Float;
+
 	@:noCompletion private var times:Array<Float>;
+	@:noCompletion private var frameTimes:Array<Float>;
 
 	public var os:String = '';
 	public var peakMemory:Float = 0;
+	public var minMemory:Float = 0;
 
 	var textField:TextField;
 	var bg:Shape;
@@ -51,12 +104,10 @@ class FPSCounter extends Sprite
 		else
 			os = '\n${LimeSystem.platformName}' #if cpp + ' ${getArch() != 'Unknown' ? getArch() : ''}' #end + ' - ${LimeSystem.platformVersion}';
 
-		// 背景 - 50%透明度
 		bg = new Shape();
 		bg.alpha = 0.5;
 		addChild(bg);
 
-		// 文本 - 完全不透明
 		textField = new TextField();
 		textField.selectable = false;
 		textField.mouseEnabled = false;
@@ -70,44 +121,111 @@ class FPSCounter extends Sprite
 		positionFPS(x, y);
 
 		currentFPS = 0;
+		averageFPS = 0;
+		minFPS = 999;
+		maxFPS = 0;
+		frameTime = 0;
+		totalFrames = 0;
+		totalRuntime = 0;
 		times = [];
+		frameTimes = [];
+		minMemory = 0;
 	}
 
 	var deltaTimeout:Float = 0.0;
+	var lastFrameTime:Float = 0;
+	var startTime:Float = 0;
 
-	// Event Handlers
 	private override function __enterFrame(deltaTime:Float):Void
 	{
-		// prevents the overlay from updating every frame, why would you need to anyways
 		if (deltaTimeout > 1000) {
 			deltaTimeout = 0.0;
 			return;
 		}
 
 		final now:Float = haxe.Timer.stamp() * 1000;
+		
+		if (startTime == 0)
+			startTime = now / 1000;
+
+		totalRuntime = (now / 1000) - startTime;
+		
+		if (lastFrameTime > 0)
+		{
+			frameTime = now - lastFrameTime;
+			frameTimes.push(frameTime);
+			if (frameTimes.length > 60)
+				frameTimes.shift();
+		}
+		lastFrameTime = now;
+
 		times.push(now);
 		while (times[0] < now - 1000) times.shift();
 
-		currentFPS = times.length < FlxG.updateFramerate ? times.length : FlxG.updateFramerate;		
+		currentFPS = times.length < FlxG.updateFramerate ? times.length : FlxG.updateFramerate;
+		
+		if (currentFPS > maxFPS && currentFPS < FlxG.updateFramerate)
+			maxFPS = currentFPS;
+		if (currentFPS < minFPS && currentFPS > 0)
+			minFPS = currentFPS;
+
+		totalFrames++;
+		averageFPS = totalFrames / totalRuntime;
+
 		updateText();
 		deltaTimeout += deltaTime;
 	}
 
-	public dynamic function updateText():Void // so people can override it in hscript
+	public dynamic function updateText():Void
 	{
 		var currentMem = memoryMegas;
 		if (currentMem > peakMemory) peakMemory = currentMem;
-		
-		textField.text = 
-		'${currentFPS} FPS  MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)} - ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}' +
-		os +
-		'\nMinty ${MainMenuState.mintyEngineVersion}\nPsych ${MainMenuState.psychEngineVersion}';
+		if (minMemory == 0 || currentMem < minMemory) minMemory = currentMem;
 
-		// 自动调整背景大小
+		var text = '';
+		
+		if (ClientPrefs.data.fpsDisplayMode == 'Simple')
+		{
+			text = '${currentFPS} FPS';
+		}
+		else if (ClientPrefs.data.fpsDisplayMode == 'Detailed')
+		{
+			text = '${currentFPS} FPS (Avg: ${Math.floor(averageFPS)})\n' +
+				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)}\n' +
+				'Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}';
+		}
+		else if (ClientPrefs.data.fpsDisplayMode == 'Advanced')
+		{
+			text = '${currentFPS} FPS | Min: ${minFPS} | Max: ${maxFPS}\n' +
+				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)}\n' +
+				'Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)} | Min: ${flixel.util.FlxStringUtil.formatBytes(minMemory)}\n' +
+				'Frame: ${Math.floor(frameTime)}ms | Total: ${totalFrames}';
+		}
+		else if (ClientPrefs.data.fpsDisplayMode == 'Full')
+		{
+			text = '${currentFPS} FPS (Avg: ${Math.floor(averageFPS)})\n' +
+				'Min: ${minFPS} | Max: ${maxFPS}\n' +
+				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)}\n' +
+				'Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}\n' +
+				'Reserved: ${flixel.util.FlxStringUtil.formatBytes(memoryReserved)}\n' +
+				'Current: ${flixel.util.FlxStringUtil.formatBytes(memoryCurrent)}\n' +
+				'Large: ${flixel.util.FlxStringUtil.formatBytes(memoryLarge)}\n' +
+				'Usage: ${Math.floor(memoryUsagePercent)}%\n' +
+				'Frame: ${Math.floor(frameTime)}ms\n' +
+				'Total: ${totalFrames} frames\n' +
+				'Runtime: ${Math.floor(totalRuntime)}s';
+		}
+
+		if (ClientPrefs.data.showOSInFPS)
+			text += os;
+		if (ClientPrefs.data.showEngineVersion)
+			text += '\nMinty ${MainMenuState.mintyEngineVersion}\nPsych ${MainMenuState.psychEngineVersion}';
+
+		textField.text = text;
+
 		textField.width = textField.textWidth + 10;
 		textField.height = textField.textHeight + 4;
 
-		// 更新背景
 		bg.graphics.clear();
 		bg.graphics.beginFill(0x000000);
 		bg.graphics.drawRect(0, 0, textField.width, textField.height);
@@ -116,15 +234,58 @@ class FPSCounter extends Sprite
 		textField.textColor = 0xFFFFFFFF;
 		if (currentFPS < FlxG.drawFramerate * 0.5)
 			textField.textColor = 0xFFFF0000;
+		else if (currentFPS < FlxG.drawFramerate * 0.75)
+			textField.textColor = 0xFFFFFF00;
 	}
 
 	inline function get_memoryMegas():Float
 		return cast(OpenFlSystem.totalMemory, UInt);
 
+	#if cpp
+	inline function get_memoryReserved():Float
+		return cpp.vm.Gc.memInfo64(cpp.vm.Gc.MEM_INFO_RESERVED);
+
+	inline function get_memoryCurrent():Float
+		return cpp.vm.Gc.memInfo64(cpp.vm.Gc.MEM_INFO_CURRENT);
+
+	inline function get_memoryLarge():Float
+		return cpp.vm.Gc.memInfo64(cpp.vm.Gc.MEM_INFO_LARGE);
+
+	inline function get_memoryUsagePercent():Float
+	{
+		var reserved = memoryReserved;
+		return reserved > 0 ? (memoryMegas / reserved) * 100 : 0;
+	}
+	#else
+	inline function get_memoryReserved():Float
+		return 0;
+
+	inline function get_memoryCurrent():Float
+		return 0;
+
+	inline function get_memoryLarge():Float
+		return 0;
+
+	inline function get_memoryUsagePercent():Float
+		return 0;
+	#end
+
 	public inline function positionFPS(X:Float, Y:Float, ?scale:Float = 1){
 		scaleX = scaleY = #if android (scale > 1 ? scale : 1) #else (scale < 1 ? scale : 1) #end;
 		x = FlxG.game.x + X;
 		y = FlxG.game.y + Y;
+	}
+
+	public function resetStats()
+	{
+		peakMemory = 0;
+		minMemory = 0;
+		minFPS = 999;
+		maxFPS = 0;
+		totalFrames = 0;
+		averageFPS = 0;
+		frameTimes = [];
+		startTime = haxe.Timer.stamp() * 1000;
 	}
 
 	#if cpp
