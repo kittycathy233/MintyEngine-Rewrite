@@ -85,6 +85,21 @@ class FPSCounter extends Sprite
 	**/
 	public var totalRuntime(default, null):Float;
 
+	/**
+		Target framerate (what the game is trying to achieve)
+	**/
+	public var targetFramerate(default, null):Int;
+
+	/**
+		Display refresh rate (from monitor)
+	**/
+	public var displayRefreshRate(default, null):Int;
+
+	/**
+		VSync is enabled
+	**/
+	public var vsyncEnabled(default, null):Bool;
+
 	@:noCompletion private var times:Array<Float>;
 	@:noCompletion private var frameTimes:Array<Float>;
 
@@ -130,11 +145,25 @@ class FPSCounter extends Sprite
 		times = [];
 		frameTimes = [];
 		minMemory = 0;
+
+		updateFramerateInfo();
 	}
 
 	var deltaTimeout:Float = 0.0;
 	var lastFrameTime:Float = 0;
 	var startTime:Float = 0;
+
+	function updateFramerateInfo()
+	{
+		#if (lime_cffi && !macro)
+		if (FlxG.stage != null && FlxG.stage.application != null && FlxG.stage.application.window != null)
+		{
+			displayRefreshRate = FlxG.stage.application.window.displayMode.refreshRate;
+		}
+		#end
+		targetFramerate = FlxG.updateFramerate;
+		vsyncEnabled = ClientPrefs.data.vsync;
+	}
 
 	private override function __enterFrame(deltaTime:Float):Void
 	{
@@ -182,6 +211,8 @@ class FPSCounter extends Sprite
 		if (currentMem > peakMemory) peakMemory = currentMem;
 		if (minMemory == 0 || currentMem < minMemory) minMemory = currentMem;
 
+		updateFramerateInfo();
+
 		var text = '';
 		
 		if (ClientPrefs.data.fpsDisplayMode == 'Simple')
@@ -213,7 +244,10 @@ class FPSCounter extends Sprite
 				'Usage: ${Math.floor(memoryUsagePercent)}%\n' +
 				'Frame: ${Math.floor(frameTime)}ms\n' +
 				'Total: ${totalFrames} frames\n' +
-				'Runtime: ${Math.floor(totalRuntime)}s';
+				'Runtime: ${Math.floor(totalRuntime)}s\n' +
+				'Target: ${targetFramerate} FPS\n' +
+				'Display: ${displayRefreshRate} Hz\n' +
+				'VSync: ${vsyncEnabled ? "ON" : "OFF"}';
 		}
 
 		if (ClientPrefs.data.showOSInFPS)

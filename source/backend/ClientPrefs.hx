@@ -228,18 +228,12 @@ class ClientPrefs {
 			final refreshRate:Int = FlxG.stage.application.window.displayMode.refreshRate;
 			data.framerate = Std.int(FlxMath.bound(refreshRate, 60, 240));
 		}
-		#end
+	#end
 
-		if(data.framerate > FlxG.drawFramerate)
-		{
-			FlxG.updateFramerate = data.framerate;
-			FlxG.drawFramerate = data.framerate;
-		}
-		else
-		{
-			FlxG.drawFramerate = data.framerate;
-			FlxG.updateFramerate = data.framerate;
-		}
+	// Always set both update and draw framerate to match the user preference
+	// This ensures the game runs at the desired framerate regardless of initial values
+	FlxG.updateFramerate = data.framerate;
+	FlxG.drawFramerate = data.framerate;
 
 		if(FlxG.save.data.gameplaySettings != null)
 		{
