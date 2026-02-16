@@ -2,6 +2,7 @@ package states.stages;
 
 import states.stages.objects.*;
 import objects.Character;
+import backend.WindowColorManager;
 
 class Philly extends BaseStage
 {
@@ -47,6 +48,8 @@ class Philly extends BaseStage
 
 		phillyStreet = new BGSprite('philly/street', -40, 50);
 		add(phillyStreet);
+		
+		WindowColorManager.init();
 	}
 	override function eventPushed(event:objects.Note.EventNote)
 	{
@@ -79,6 +82,7 @@ class Philly extends BaseStage
 	override function update(elapsed:Float)
 	{
 		phillyWindow.alpha -= (Conductor.crochet / 1000) * FlxG.elapsed * 1.5;
+		WindowColorManager.update(elapsed);
 		if(phillyGlowParticles != null)
 		{
 			var i:Int = phillyGlowParticles.members.length-1;
@@ -104,6 +108,10 @@ class Philly extends BaseStage
 			curLight = FlxG.random.int(0, phillyLightsColors.length - 1, [curLight]);
 			phillyWindow.color = phillyLightsColors[curLight];
 			phillyWindow.alpha = 1;
+			if(phillyGlowGradient == null || !phillyGlowGradient.visible)
+			{
+				WindowColorManager.setColor(phillyLightsColors[curLight], false);
+			}
 		}
 	}
 
@@ -139,6 +147,12 @@ class Philly extends BaseStage
 								who.color = FlxColor.WHITE;
 							}
 							phillyStreet.color = FlxColor.WHITE;
+							
+							WindowColorManager.setPhillyGlowActive(false);
+							if(curLight != -1)
+							{
+								WindowColorManager.setColor(phillyLightsColors[curLight], false);
+							}
 						}
 
 					case 1: //turn on
@@ -184,6 +198,8 @@ class Philly extends BaseStage
 
 						color.brightness *= 0.5;
 						phillyStreet.color = color;
+						
+						WindowColorManager.setPhillyGlowActive(true, phillyLightsColors[curLightEvent]);
 
 					case 2: // spawn particles
 						if(!ClientPrefs.data.lowQuality)
@@ -211,5 +227,11 @@ class Philly extends BaseStage
 		if(!ClientPrefs.data.flashing) color.alphaFloat = 0.5;
 
 		FlxG.camera.flash(color, 0.15, null, true);
+	}
+	
+	override public function destroy():Void
+	{
+		WindowColorManager.reset();
+		super.destroy();
 	}
 }

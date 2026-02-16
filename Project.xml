@@ -107,6 +107,7 @@
 	<haxelib name="flxanimate"/>
 	<haxelib name="funkin.vis"/>
 	<haxelib name="grig.audio" if="funkin.vis"/>
+	<haxelib name="hxWindowColorMode" version="0.2.1" if="windows"/>
 	
 	<!-- Disable Discord IO Thread -->
 	<haxedef name="DISCORD_DISABLE_IO_THREAD" if="hxdiscord_rpc" />

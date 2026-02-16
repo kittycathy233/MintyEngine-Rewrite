@@ -79,7 +79,11 @@ class ChartingState extends MusicBeatState
 		['Change Character', "Value 1: Character to change (Dad, BF, GF)\nValue 2: New character's name"],
 		['Change Scroll Speed', "Value 1: Scroll Speed Multiplier (1 is default)\nValue 2: Time it takes to change fully in seconds."],
 		['Set Property', "Value 1: Variable name\nValue 2: New value"],
-		['Play Sound', "Value 1: Sound file name\nValue 2: Volume (Default: 1), ranges from 0 to 1"]
+		['Play Sound', "Value 1: Sound file name\nValue 2: Volume (Default: 1), ranges from 0 to 1"],
+		['Set Window Color Mode', "Sets the window color mode (Windows only)\nValue 1: dark/light/true/false\n\nDark mode: dark, true, 1\nLight mode: light, false, 0"],
+		['Set Window Border Color', "Sets the window border and header color (Windows only)\nValue 1: RGB color (format: R,G,B)\nValue 2: header/border/blank\n\nExample: 255,0,0 (Red)\nValue 2 options:\n- header: Only title bar\n- border: Only window border\n- blank: Both title bar and border"],
+		['Set Window Title Color', "Sets the window title text color (Windows only)\nValue 1: RGB color (format: R,G,B)\n\nExample: 255,255,255 (White)"],
+		['Set Window Corner Type', "Sets the window corner type (Windows 11 only)\nValue 1: Corner type (0-3)\n\n0 = System default\n1 = No round corners\n2 = Round corners\n3 = Small round corners"]
 	];
 
 	var _file:FileReference;
@@ -142,6 +146,8 @@ class ChartingState extends MusicBeatState
 
 	var value1InputText:FlxUIInputText;
 	var value2InputText:FlxUIInputText;
+	var value3InputText:FlxUIInputText;
+	var value4InputText:FlxUIInputText;
 	var currentSongName:String;
 
 	var zoomTxt:FlxText;
@@ -1053,6 +1059,16 @@ class ChartingState extends MusicBeatState
 		value2InputText = new FlxUIInputText(20, 150, 100, "");
 		blockPressWhileTypingOn.push(value2InputText);
 
+		var text:FlxText = new FlxText(140, 90, 0, "Value 3:");
+		tab_group_event.add(text);
+		value3InputText = new FlxUIInputText(140, 110, 100, "");
+		blockPressWhileTypingOn.push(value3InputText);
+
+		var text:FlxText = new FlxText(140, 130, 0, "Value 4:");
+		tab_group_event.add(text);
+		value4InputText = new FlxUIInputText(140, 150, 100, "");
+		blockPressWhileTypingOn.push(value4InputText);
+
 		// New event buttons
 		var removeButton:FlxButton = new FlxButton(eventDropDown.x + eventDropDown.width + 10, eventDropDown.y, '-', function()
 		{
@@ -1090,7 +1106,7 @@ class ChartingState extends MusicBeatState
 			if(curSelectedNote != null && curSelectedNote[2] == null) //Is event note
 			{
 				var eventsGroup:Array<Dynamic> = curSelectedNote[1];
-				eventsGroup.push(['', '', '']);
+				eventsGroup.push(['', '', '', '', '']);
 
 				changeEventSelected(1);
 				updateGrid();
@@ -1131,6 +1147,8 @@ class ChartingState extends MusicBeatState
 		tab_group_event.add(descText);
 		tab_group_event.add(value1InputText);
 		tab_group_event.add(value2InputText);
+		tab_group_event.add(value3InputText);
+		tab_group_event.add(value4InputText);
 		tab_group_event.add(eventDropDown);
 
 		UI_box.addGroup(tab_group_event);
@@ -1674,6 +1692,20 @@ class ChartingState extends MusicBeatState
 					if(curSelectedNote[1][curEventSelected] != null)
 					{
 						curSelectedNote[1][curEventSelected][2] = value2InputText.text;
+						updateGrid();
+					}
+				}
+				else if(sender == value3InputText) {
+					if(curSelectedNote[1][curEventSelected] != null)
+					{
+						curSelectedNote[1][curEventSelected][3] = value3InputText.text;
+						updateGrid();
+					}
+				}
+				else if(sender == value4InputText) {
+					if(curSelectedNote[1][curEventSelected] != null)
+					{
+						curSelectedNote[1][curEventSelected][4] = value4InputText.text;
 						updateGrid();
 					}
 				}
@@ -2944,6 +2976,8 @@ class ChartingState extends MusicBeatState
 				}
 				value1InputText.text = curSelectedNote[1][curEventSelected][1];
 				value2InputText.text = curSelectedNote[1][curEventSelected][2];
+				value3InputText.text = curSelectedNote[1][curEventSelected][3] != null ? curSelectedNote[1][curEventSelected][3] : '';
+				value4InputText.text = curSelectedNote[1][curEventSelected][4] != null ? curSelectedNote[1][curEventSelected][4] : '';
 			}
 			strumTimeInputText.text = '' + curSelectedNote[0];
 		}
@@ -3297,7 +3331,9 @@ class ChartingState extends MusicBeatState
 			var event = eventStuff[Std.parseInt(eventDropDown.selectedId)][0];
 			var text1 = value1InputText.text;
 			var text2 = value2InputText.text;
-			_song.events.push([noteStrum, [[event, text1, text2]]]);
+			var text3 = value3InputText.text;
+			var text4 = value4InputText.text;
+			_song.events.push([noteStrum, [[event, text1, text2, text3, text4]]]);
 			curSelectedNote = _song.events[_song.events.length - 1];
 			curEventSelected = 0;
 		}

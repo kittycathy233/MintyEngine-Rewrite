@@ -15,6 +15,10 @@ import psychlua.FunkinLua;
 import psychlua.HScript;
 #end
 
+#if (cpp && windows)
+import hxwindowmode.WindowColorMode;
+#end
+
 enum CharacterType
 {
 	BOYFRIEND;
@@ -202,6 +206,17 @@ class EventHandler
 
 			case 'Custom Event':
 				triggerCustomEvent(value1, value2, value3, value4, flValue1, flValue2, flValue3, flValue4);
+
+			#if (cpp && windows)
+			case 'Set Window Color Mode':
+				triggerWindowColorModeEvent(value1);
+			case 'Set Window Border Color':
+				triggerWindowBorderColorEvent(value1, value2);
+			case 'Set Window Title Color':
+				triggerWindowTitleColorEvent(value1);
+			case 'Set Window Corner Type':
+				triggerWindowCornerTypeEvent(flValue1);
+			#end
 		}
 
 		for (stage in playState.stages)
@@ -501,4 +516,114 @@ class EventHandler
 				}
 		}
 	}
+
+	#if (cpp && windows)
+	private function triggerWindowColorModeEvent(value1:String)
+	{
+		var isDark:Bool = false;
+		
+		if(value1 != null)
+		{
+			var normalized = value1.toLowerCase().trim();
+			if(normalized == 'dark' || normalized == 'true' || normalized == '1')
+			{
+				isDark = true;
+			}
+		}
+		
+		WindowColorMode.setWindowColorMode(isDark);
+		
+		if(WindowColorMode.isWindows10)
+		{
+			WindowColorMode.redrawWindowHeader();
+		}
+	}
+
+	private function triggerWindowBorderColorEvent(value1:String, value2:String)
+	{
+		var colorArray:Array<Int> = [255, 255, 255];
+		
+		if(value1 != null)
+		{
+			var split:Array<String> = value1.split(',');
+			if(split.length >= 3)
+			{
+				colorArray[0] = Std.parseInt(split[0].trim());
+				colorArray[1] = Std.parseInt(split[1].trim());
+				colorArray[2] = Std.parseInt(split[2].trim());
+				
+				if(Math.isNaN(colorArray[0])) colorArray[0] = 255;
+				if(Math.isNaN(colorArray[1])) colorArray[1] = 255;
+				if(Math.isNaN(colorArray[2])) colorArray[2] = 255;
+			}
+		}
+		
+		var setHeader:Bool = true;
+		var setBorder:Bool = true;
+		
+		if(value2 != null)
+		{
+			var normalized = value2.toLowerCase().trim();
+			if(normalized == 'header' || normalized == 'h')
+			{
+				setBorder = false;
+			}
+			else if(normalized == 'border' || normalized == 'b')
+			{
+				setHeader = false;
+			}
+		}
+		
+		WindowColorMode.setWindowBorderColor(colorArray, setHeader, setBorder);
+		
+		if(WindowColorMode.isWindows10)
+		{
+			WindowColorMode.redrawWindowHeader();
+		}
+	}
+
+	private function triggerWindowTitleColorEvent(value1:String)
+	{
+		var colorArray:Array<Int> = [255, 255, 255];
+		
+		if(value1 != null)
+		{
+			var split:Array<String> = value1.split(',');
+			if(split.length >= 3)
+			{
+				colorArray[0] = Std.parseInt(split[0].trim());
+				colorArray[1] = Std.parseInt(split[1].trim());
+				colorArray[2] = Std.parseInt(split[2].trim());
+				
+				if(Math.isNaN(colorArray[0])) colorArray[0] = 255;
+				if(Math.isNaN(colorArray[1])) colorArray[1] = 255;
+				if(Math.isNaN(colorArray[2])) colorArray[2] = 255;
+			}
+		}
+		
+		WindowColorMode.setWindowTitleColor(colorArray);
+		
+		if(WindowColorMode.isWindows10)
+		{
+			WindowColorMode.redrawWindowHeader();
+		}
+	}
+
+	private function triggerWindowCornerTypeEvent(flValue1:Null<Float>)
+	{
+		var cornerType:Int = 0;
+		
+		if(flValue1 != null)
+		{
+			cornerType = Std.int(flValue1);
+		}
+		
+		WindowColorMode.setWindowCornerType(cornerType);
+		
+		if(WindowColorMode.isWindows10)
+		{
+			WindowColorMode.redrawWindowHeader();
+		}
+	}
+	#end
 }
