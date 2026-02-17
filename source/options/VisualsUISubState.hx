@@ -91,10 +91,10 @@ class VisualsUISubState extends BaseOptionsMenu
 		addOption(option);
 
 		var option:Option = new Option('Score Text Style',
-			"Select the score text display style.\nOS: Shows Combo Breaks, Average MS, Accuracy %, Rating.\nPsych: Shows Misses and Rating with percentage.",
+			"Select the score text display style.\nOS: Shows Combo Breaks, Average MS, Accuracy %, Rating.\nOS(Detailed): Shows Combo Breaks, Average MS, Accuracy %, Rating with detailed MS.\nPsych: Shows Misses and Rating with percentage.",
 			'scoreTxtStyle',
 			'string',
-			['OS', 'Psych']);
+			['OS', 'OS(Detailed)', 'Psych']);
 		addOption(option);
 
 		var option:Option = new Option('Icon Bounce Style',

@@ -579,12 +579,13 @@ class PlayState extends MusicBeatState
 		iconP2.alpha = ClientPrefs.data.healthBarAlpha;
 		uiGroup.add(iconP2);
 
-		var scoreTxtSize:Int = ClientPrefs.data.scoreTxtStyle == 'OS' ? 16 : 20;
-		var scoreTxtY:Float = ClientPrefs.data.scoreTxtStyle == 'OS' ? healthBar.y + 33 : healthBar.y + 40;
+		var isOSStyle:Bool = ClientPrefs.data.scoreTxtStyle == 'OS' || ClientPrefs.data.scoreTxtStyle == 'OS(Detailed)';
+		var scoreTxtSize:Int = isOSStyle ? 16 : 20;
+		var scoreTxtY:Float = isOSStyle ? healthBar.y + 33 : healthBar.y + 40;
 		scoreTxt = new FlxText(0, scoreTxtY, FlxG.width, "", scoreTxtSize);
 		scoreTxt.setFormat(Paths.font("vcr.ttf"), scoreTxtSize, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scoreTxt.scrollFactor.set();
-		scoreTxt.borderSize = ClientPrefs.data.scoreTxtStyle == 'OS' ? 1.2 : 1.25;
+		scoreTxt.borderSize = isOSStyle ? 1.2 : 1.25;
 		scoreTxt.visible = !ClientPrefs.data.hideScoreText && !ClientPrefs.data.hideHud;
 		updateScore(false);
 		uiGroup.add(scoreTxt);
@@ -1196,7 +1197,7 @@ class PlayState extends MusicBeatState
 		if (ret == LuaUtils.Function_Stop)
 			return;
 
-		if (ClientPrefs.data.scoreTxtStyle == 'OS') {
+		if (ClientPrefs.data.scoreTxtStyle == 'OS' || ClientPrefs.data.scoreTxtStyle == 'OS(Detailed)') {
 			if(ratingName == '?') {
 				scoreTxt.text = 'Score: ${songScore}'
 				+ ' | Combo Breaks: ${songMisses}'
@@ -2281,12 +2282,17 @@ class PlayState extends MusicBeatState
 
 		if (ClientPrefs.data.showMsText) {
 			msTimeTxt.alpha = 1;
-			var rounded = FlxMath.roundDecimal(noteDiff, 2);
-			var msStr = Std.string(rounded);
-			if (msStr.indexOf(".") != -1) {
-				msStr = ~/0+$/.replace(msStr, "");
-				if (msStr.charAt(msStr.length - 1) == '.') {
-					msStr = msStr.substring(0, msStr.length - 1);
+			var msStr:String;
+			if (ClientPrefs.data.scoreTxtStyle == 'OS') {
+				msStr = Std.string(Math.round(noteDiffAbs));
+			} else {
+				var rounded = FlxMath.roundDecimal(noteDiff, 2);
+				msStr = Std.string(rounded);
+				if (msStr.indexOf(".") != -1) {
+					msStr = ~/0+$/.replace(msStr, "");
+					if (msStr.charAt(msStr.length - 1) == '.') {
+						msStr = msStr.substring(0, msStr.length - 1);
+					}
 				}
 			}
 			msTimeTxt.text = msStr + "ms";
