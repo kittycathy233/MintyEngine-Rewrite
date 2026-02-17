@@ -103,6 +103,12 @@ class VisualsUISubState extends BaseOptionsMenu
 			'string',
 			['OS', 'Psych']);
 		addOption(option);
+
+		var option:Option = new Option('OS Icon Style',
+			"If checked, enables OS-style 3-frame icons (normal, losing, winning).\nIf unchecked, uses Psych-style 2-frame icons (normal, losing).\nRequires icon files with 3 frames (450px width) to work properly.",
+			'osIconStyle',
+			'bool');
+		addOption(option);
 		
 		var option:Option = new Option('Time Bar:',
 			"What should the Time Bar display?",

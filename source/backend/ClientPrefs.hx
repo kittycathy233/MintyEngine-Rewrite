@@ -101,6 +101,7 @@ import states.TitleState;
 	public var hideScoreText:Bool = false;
 	public var scoreTxtStyle:String = 'OS'; // 'OS' or 'Psych'
 	public var removePerfects:Bool = false;
+	public var osIconStyle:Bool = true; // Enable OS-style 3-frame icons (normal, losing, winning)
 }
 
 class ClientPrefs {

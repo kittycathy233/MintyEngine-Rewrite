@@ -6,6 +6,7 @@ class HealthIcon extends FlxSprite
 	private var isOldIcon:Bool = false;
 	private var isPlayer:Bool = false;
 	private var char:String = '';
+	private var isThreeFrameIcon:Bool = false;
 
 	public function new(char:String = 'bf', isPlayer:Bool = false, ?allowGPU:Bool = true)
 	{
@@ -32,12 +33,27 @@ class HealthIcon extends FlxSprite
 			if(!Paths.fileExists('images/' + name + '.png', IMAGE)) name = 'icons/icon-face'; //Prevents crash from missing icon
 			
 			var graphic = Paths.image(name, allowGPU);
-			loadGraphic(graphic, true, Math.floor(graphic.width / 2), Math.floor(graphic.height));
-			iconOffsets[0] = (width - 150) / 2;
-			iconOffsets[1] = (height - 150) / 2;
+			loadGraphic(graphic); //Load stupidly first for getting the file size
+			var width2 = width;
+			
+			if (width == 450 && ClientPrefs.data.osIconStyle) {
+				loadGraphic(graphic, true, Math.floor(width / 3), Math.floor(height)); //Then load it fr // 3-frame icons (normal, losing, winning)
+				iconOffsets[0] = (width - 150) / 3;
+				iconOffsets[1] = (width - 150) / 3;
+				isThreeFrameIcon = true;
+			} else {
+				loadGraphic(graphic, true, Math.floor(width / 2), Math.floor(height)); //Then load it fr // 2-frame icons (normal, losing)
+				iconOffsets[0] = (width - 150) / 2;
+				iconOffsets[1] = (width - 150) / 2;
+				isThreeFrameIcon = false;
+			}
+			
 			updateHitbox();
-
-			animation.add(char, [0, 1], 0, false, isPlayer);
+			if (isThreeFrameIcon) {
+				animation.add(char, [0, 1, 2], 0, false, isPlayer);
+			} else {
+				animation.add(char, [0, 1], 0, false, isPlayer);
+			}
 			animation.play(char);
 			this.char = char;
 
@@ -57,5 +73,9 @@ class HealthIcon extends FlxSprite
 
 	public function getCharacter():String {
 		return char;
+	}
+
+	public function getIsThreeFrameIcon():Bool {
+		return isThreeFrameIcon;
 	}
 }
