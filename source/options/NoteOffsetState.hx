@@ -400,7 +400,7 @@ class NoteOffsetState extends MusicBeatState
 				updateNoteDelay();
 			}
 
-			if(controls.RESET || touchPad.buttonC.justPressed)
+			if(controls.RESET || (touchPad != null && touchPad.buttonC.justPressed))
 			{
 				holdTime = 0;
 				barPercent = 0;
