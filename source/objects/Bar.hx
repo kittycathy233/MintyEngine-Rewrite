@@ -22,6 +22,7 @@ class Bar extends FlxSpriteGroup
 	public var stripeGap:Int = 12;
 	public var stripeAngle:Float = 45;
 	public var stripeColor:FlxColor = FlxColor.WHITE;
+	public var stripeBaseAlpha:Float = 0.2;
 
 	public var barWidth(default, set):Int = 1;
 	public var barHeight(default, set):Int = 1;
@@ -48,7 +49,6 @@ class Bar extends FlxSpriteGroup
 
 		stripedOverlay = new FlxSprite();
 		stripedOverlay.antialiasing = ClientPrefs.data.antialiasing;
-		stripedOverlay.alpha = 0.2;
 
 		add(leftBar);
 		add(rightBar);
@@ -72,6 +72,14 @@ class Bar extends FlxSpriteGroup
 		}
 		else percent = 0;
 		super.update(elapsed);
+	}
+
+	override function set_alpha(value:Float):Float
+	{
+		super.set_alpha(value);
+		if(stripedOverlay != null)
+			stripedOverlay.alpha = stripeBaseAlpha * value;
+		return value;
 	}
 	
 	public function setBounds(min:Float, max:Float)

@@ -96,6 +96,10 @@ import states.TitleState;
 	public var guitarHeroSustains:Bool = true;
 	public var discordRPC:Bool = true;
 	public var hscriptEngine:String = 'SScript'; // 'SScript' or 'Iris'
+	public var iconBounce:String = 'OS'; // 'OS' or 'Psych'
+	public var hideWatermark:Bool = false;
+	public var hideScoreText:Bool = false;
+	public var scoreTxtStyle:String = 'OS'; // 'OS' or 'Psych'
 }
 
 class ClientPrefs {

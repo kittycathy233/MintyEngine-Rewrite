@@ -77,6 +77,32 @@ class VisualsUISubState extends BaseOptionsMenu
 			'hideHud',
 			'bool');
 		addOption(option);
+
+		var option:Option = new Option('Hide Watermark',
+			'If checked, hides the watermark in the bottom-left corner during gameplay.',
+			'hideWatermark',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Hide Score Text',
+			'If checked, hides the score text under the health bar during gameplay.',
+			'hideScoreText',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Score Text Style',
+			"Select the score text display style.\nOS: Shows Combo Breaks, Average MS, Accuracy %, Rating.\nPsych: Shows Misses and Rating with percentage.",
+			'scoreTxtStyle',
+			'string',
+			['OS', 'Psych']);
+		addOption(option);
+
+		var option:Option = new Option('Icon Bounce Style',
+			"Select the icon bounce animation style.\nOS: Icons rotate left and right on each beat.\nPsych: Icons only scale without rotation.",
+			'iconBounce',
+			'string',
+			['OS', 'Psych']);
+		addOption(option);
 		
 		var option:Option = new Option('Time Bar:',
 			"What should the Time Bar display?",

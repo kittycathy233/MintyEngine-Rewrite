@@ -27,6 +27,7 @@ import cutscenes.DialogueBoxPsych;
 
 import states.StoryMenuState;
 import states.FreeplayState;
+import states.MainMenuState;
 import states.editors.ChartingState;
 import states.editors.CharacterEditorState;
 
@@ -203,6 +204,7 @@ class PlayState extends MusicBeatState
 
 	public var botplaySine:Float = 0;
 	public var botplayTxt:FlxText;
+	public var watermarkTxt:FlxText;
 
 	public var iconP1:HealthIcon;
 	public var iconP2:HealthIcon;
@@ -220,6 +222,8 @@ class PlayState extends MusicBeatState
 	var scoreTxtTween:FlxTween;
 	var msTimeTxt:FlxText;
 	var msTimeTxtTween:FlxTween;
+	var allNotesMs:Float = 0;
+	var averageMs:Float = 0;
 
 	public static var campaignScore:Int = 0;
 	public static var campaignMisses:Int = 0;
@@ -573,13 +577,22 @@ class PlayState extends MusicBeatState
 		iconP2.alpha = ClientPrefs.data.healthBarAlpha;
 		uiGroup.add(iconP2);
 
-		scoreTxt = new FlxText(0, healthBar.y + 40, FlxG.width, "", 20);
-		scoreTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		var scoreTxtSize:Int = ClientPrefs.data.scoreTxtStyle == 'OS' ? 16 : 20;
+		var scoreTxtY:Float = ClientPrefs.data.scoreTxtStyle == 'OS' ? healthBar.y + 33 : healthBar.y + 40;
+		scoreTxt = new FlxText(0, scoreTxtY, FlxG.width, "", scoreTxtSize);
+		scoreTxt.setFormat(Paths.font("vcr.ttf"), scoreTxtSize, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scoreTxt.scrollFactor.set();
-		scoreTxt.borderSize = 1.25;
-		scoreTxt.visible = !ClientPrefs.data.hideHud;
+		scoreTxt.borderSize = ClientPrefs.data.scoreTxtStyle == 'OS' ? 1.2 : 1.25;
+		scoreTxt.visible = !ClientPrefs.data.hideScoreText && !ClientPrefs.data.hideHud;
 		updateScore(false);
 		uiGroup.add(scoreTxt);
+
+		watermarkTxt = new FlxText(12, FlxG.height - 24, 0, "", 16);
+		watermarkTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		watermarkTxt.scrollFactor.set();
+		watermarkTxt.borderSize = 1;
+		watermarkTxt.visible = !ClientPrefs.data.hideWatermark && !ClientPrefs.data.hideHud;
+		uiGroup.add(watermarkTxt);
 
 		msTimeTxt = new FlxText(0, 0, 400, "", 32);
 		msTimeTxt.setFormat(Paths.font('vcr.ttf'), 32, 0xFFAC75FF, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
@@ -604,6 +617,8 @@ class PlayState extends MusicBeatState
 		msTimeTxt.cameras = [camHUD];
 
 		startingSong = true;
+
+		updateWatermarkText();
 
 		#if LUA_ALLOWED
 		for (notetype in noteTypes)
@@ -1179,19 +1194,30 @@ class PlayState extends MusicBeatState
 		if (ret == LuaUtils.Function_Stop)
 			return;
 
-		var str:String = ratingName;
-		if(totalPlayed != 0)
-		{
-			var percent:Float = CoolUtil.floorDecimal(ratingPercent * 100, 2);
-			str += ' (${percent}%) - ${ratingFC}';
+		if (ClientPrefs.data.scoreTxtStyle == 'OS') {
+			if(ratingName == '?') {
+				scoreTxt.text = 'Score: ${songScore}'
+				+ ' | Combo Breaks: ${songMisses}'
+				+ ' | Average: ?'
+				+ ' | Accuracy: ${ratingName}';
+			} else {
+				scoreTxt.text = 'Score: ${songScore}'
+				+ ' | Combo Breaks: ${songMisses}'
+				+ ' | Average: ${Math.round(averageMs)}ms'
+				+ ' | Accuracy: ${CoolUtil.floorDecimal(ratingPercent * 100, 2)}%'
+				+ ' | ${ratingName} [${ratingFC}]';
+			}
+		} else {
+			var str:String = ratingName;
+			if(totalPlayed != 0)
+			{
+				var percent:Float = CoolUtil.floorDecimal(ratingPercent * 100, 2);
+				str += ' (${percent}%) - ${ratingFC}';
+			}
+			scoreTxt.text = 'Score: ${songScore}'
+			+ (!instakillOnMiss ? ' | Misses: ${songMisses}' : "")
+			+ ' | Rating: ${str}';
 		}
-
-		var tempScore:String = 'Score: ${songScore}'
-		+ (!instakillOnMiss ? ' | Misses: ${songMisses}' : "")
-		+ ' | Rating: ${str}';
-		// "tempScore" variable is used to prevent another memory leak, just in case
-		// "\n" here prevents the text from being cut off by beat zooms
-		scoreTxt.text = '${tempScore}\n';
 
 		if (!miss && !cpuControlled)
 			doScoreBop();
@@ -1875,6 +1901,12 @@ class PlayState extends MusicBeatState
 		iconP2.x = healthBar.barCenter - (150 * iconP2.scale.x) / 2 - iconOffset * 2;
 	}
 
+	public function updateWatermarkText()
+	{
+		if (watermarkTxt != null)
+			watermarkTxt.text = curSong + " (" + storyDifficultyText + ") | MTE v" + MainMenuState.mintyEngineVersion;
+	}
+
 	var iconsAnimations:Bool = true;
 	function set_health(value:Float):Float // You can alter how icon animations work here
 	{
@@ -2288,6 +2320,8 @@ class PlayState extends MusicBeatState
 			if(!note.ratingDisabled)
 			{
 				songHits++;
+				allNotesMs += noteDiff;
+				averageMs = allNotesMs / songHits;
 				totalPlayed++;
 				RecalculateRating(false);
 			}
@@ -2431,8 +2465,8 @@ class PlayState extends MusicBeatState
 		var ret:Dynamic = callOnScripts('onKeyPressPre', [key]);
 		if(ret == LuaUtils.Function_Stop) return;
 
-		var lastTime:Float = Conductor.songPosition;
-		if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time;
+		//var lastTime:Float = Conductor.songPosition;
+		//if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time;
 
 		var plrInputNotes:Array<Note> = notes.members.filter(function(n:Note):Bool {
 			var canHit:Bool = !strumsBlocked[n.noteData] && n.canBeHit && n.mustPress && !n.tooLate && !n.wasGoodHit && !n.blockHit;
@@ -2471,7 +2505,7 @@ class PlayState extends MusicBeatState
 		//									- Shadow Mario
 		if(!keysPressed.contains(key)) keysPressed.push(key);
 
-		Conductor.songPosition = lastTime;
+		//Conductor.songPosition = lastTime;
 
 		var spr:StrumNote = playerStrums.members[key];
 		if(strumsBlocked[key] != true && spr != null && spr.animation.curAnim.name != 'confirm')
@@ -2909,6 +2943,7 @@ class PlayState extends MusicBeatState
 	}
 
 	var lastBeatHit:Int = -1;
+	var dancingLeft:Bool = false;
 
 	override function beatHit()
 	{
@@ -2922,6 +2957,17 @@ class PlayState extends MusicBeatState
 
 		iconP1.scale.set(1.2, 1.2);
 		iconP2.scale.set(1.2, 1.2);
+
+		dancingLeft = !dancingLeft;
+		if (ClientPrefs.data.iconBounce == "OS") {
+			if (dancingLeft) {
+				iconP1.angle = 8;
+				iconP2.angle = 8;
+			} else {
+				iconP1.angle = -8;
+				iconP2.angle = -8;
+			}
+		}
 
 		iconP1.updateHitbox();
 		iconP2.updateHitbox();
