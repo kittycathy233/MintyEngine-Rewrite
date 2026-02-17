@@ -30,6 +30,7 @@ import states.TitleState;
 	public var fpsDisplayMode:String = 'Simple';
 	public var showOSInFPS:Bool = true;
 	public var showEngineVersion:Bool = true;
+	public var showMsText:Bool = false;
 	public var flashing:Bool = true;
 	public var autoPause:Bool = true;
 	public var antialiasing:Bool = true;

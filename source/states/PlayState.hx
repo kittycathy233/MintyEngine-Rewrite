@@ -217,6 +217,8 @@ class PlayState extends MusicBeatState
 	public var scoreTxt:FlxText;
 	var timeTxt:FlxText;
 	var scoreTxtTween:FlxTween;
+	var msTimeTxt:FlxText;
+	var msTimeTxtTween:FlxTween;
 
 	public static var campaignScore:Int = 0;
 	public static var campaignMisses:Int = 0;
@@ -549,6 +551,12 @@ class PlayState extends MusicBeatState
 		healthBar.scrollFactor.set();
 		healthBar.visible = !ClientPrefs.data.hideHud;
 		healthBar.alpha = ClientPrefs.data.healthBarAlpha;
+		healthBar.showStripes = true;
+		healthBar.stripeWidth = 7;
+		healthBar.stripeGap = 12;
+		healthBar.stripeAngle = -45;
+		healthBar.stripeColor = FlxColor.BLACK;
+		healthBar.createStripedOverlay();
 		reloadHealthBarColors();
 		uiGroup.add(healthBar);
 
@@ -572,6 +580,14 @@ class PlayState extends MusicBeatState
 		updateScore(false);
 		uiGroup.add(scoreTxt);
 
+		msTimeTxt = new FlxText(0, 0, 400, "", 32);
+		msTimeTxt.setFormat(Paths.font('vcr.ttf'), 32, 0xFFAC75FF, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		msTimeTxt.scrollFactor.set();
+		msTimeTxt.alpha = 0;
+		msTimeTxt.visible = true;
+		msTimeTxt.borderSize = 2;
+		add(msTimeTxt);
+
 		botplayTxt = new FlxText(400, timeBar.y + 55, FlxG.width - 800, "BOTPLAY", 32);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
@@ -584,6 +600,7 @@ class PlayState extends MusicBeatState
 		uiGroup.cameras = [camHUD];
 		noteGroup.cameras = [camHUD];
 		comboGroup.cameras = [camHUD];
+		msTimeTxt.cameras = [camHUD];
 
 		startingSong = true;
 
@@ -996,6 +1013,21 @@ class PlayState extends MusicBeatState
 			Conductor.songPosition = -Conductor.crochet * 5;
 			setOnScripts('startedCountdown', true);
 			callOnScripts('onCountdownStarted', null);
+
+			if (ClientPrefs.data.showMsText) {
+				if (ClientPrefs.data.downScroll) {
+					msTimeTxt.x = playerStrums.members[1].x - 100;
+					msTimeTxt.y = playerStrums.members[1].y + 100;
+				} else {
+					msTimeTxt.x = playerStrums.members[1].x - 100;
+					msTimeTxt.y = playerStrums.members[1].y - 50;
+				}
+
+				if (ClientPrefs.data.middleScroll) {
+					msTimeTxt.x = playerStrums.members[0].x - 250;
+					msTimeTxt.y = playerStrums.members[1].y + 30;
+				}
+			}
 
 			var swagCounter:Int = 0;
 			if (startOnTime > 0) {
@@ -2208,6 +2240,23 @@ class PlayState extends MusicBeatState
 		var noteDiff:Float = Math.abs(note.strumTime - Conductor.songPosition + ClientPrefs.data.ratingOffset);
 		vocals.volume = 1;
 
+		if (ClientPrefs.data.showMsText) {
+			msTimeTxt.alpha = 1;
+			var msStr = Std.string(noteDiff);
+			var dotPos = msStr.indexOf(".");
+			if (dotPos != -1 && msStr.length > dotPos + 3) {
+				msStr = msStr.substr(0, dotPos + 3);
+			}
+			msTimeTxt.text = msStr + "ms";
+			if (msTimeTxtTween != null) {
+				msTimeTxtTween.cancel();
+				msTimeTxtTween.destroy();
+			}
+			msTimeTxtTween = FlxTween.tween(msTimeTxt, {alpha: 0}, 0.25, {
+				onComplete: function(tw:FlxTween) {msTimeTxtTween = null;}, startDelay: 0.7
+			});
+		}
+
 		if (!ClientPrefs.data.comboStacking && comboGroup.members.length > 0) {
 			for (spr in comboGroup) {
 				spr.destroy();
@@ -2380,7 +2429,7 @@ class PlayState extends MusicBeatState
 		if(ret == LuaUtils.Function_Stop) return;
 
 		// more accurate hit time for the ratings?
-		var lastTime:Float = Conductor.songPosition;
+		//var lastTime:Float = Conductor.songPosition;
 		if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time;
 
 		// obtain notes that the player can hit
@@ -2422,7 +2471,7 @@ class PlayState extends MusicBeatState
 		if(!keysPressed.contains(key)) keysPressed.push(key);
 
 		//more accurate hit time for the ratings? part 2 (Now that the calculations are done, go back to the time it was before for not causing a note stutter)
-		Conductor.songPosition = lastTime;
+		//Conductor.songPosition = lastTime;
 
 		var spr:StrumNote = playerStrums.members[key];
 		if(strumsBlocked[key] != true && spr != null && spr.animation.curAnim.name != 'confirm')
