@@ -222,22 +222,19 @@ class FPSCounter extends Sprite
 		else if (ClientPrefs.data.fpsDisplayMode == 'Detailed')
 		{
 			text = '${currentFPS} FPS (Avg: ${Math.floor(averageFPS)})\n' +
-				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)}\n' +
-				'Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}';
+				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)} | Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}';
 		}
 		else if (ClientPrefs.data.fpsDisplayMode == 'Advanced')
 		{
 			text = '${currentFPS} FPS | Min: ${minFPS} | Max: ${maxFPS}\n' +
-				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)}\n' +
-				'Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)} | Min: ${flixel.util.FlxStringUtil.formatBytes(minMemory)}\n' +
+				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)} | Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)} | Min: ${flixel.util.FlxStringUtil.formatBytes(minMemory)}\n' +
 				'Frame: ${Math.floor(frameTime)}ms | Total: ${totalFrames}';
 		}
 		else if (ClientPrefs.data.fpsDisplayMode == 'Full')
 		{
 			text = '${currentFPS} FPS (Avg: ${Math.floor(averageFPS)})\n' +
 				'Min: ${minFPS} | Max: ${maxFPS}\n' +
-				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)}\n' +
-				'Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}\n' +
+				'MEM: ${flixel.util.FlxStringUtil.formatBytes(currentMem)} | Peak: ${flixel.util.FlxStringUtil.formatBytes(peakMemory)}\n' +
 				'Reserved: ${flixel.util.FlxStringUtil.formatBytes(memoryReserved)}\n' +
 				'Current: ${flixel.util.FlxStringUtil.formatBytes(memoryCurrent)}\n' +
 				'Large: ${flixel.util.FlxStringUtil.formatBytes(memoryLarge)}\n' +
@@ -253,7 +250,7 @@ class FPSCounter extends Sprite
 		if (ClientPrefs.data.showOSInFPS)
 			text += os;
 		if (ClientPrefs.data.showEngineVersion)
-			text += '\nMinty ${MainMenuState.mintyEngineVersion}\nPsych ${MainMenuState.psychEngineVersion}';
+			text += '\nMinty ${MainMenuState.mintyEngineVersion} | Psych ${MainMenuState.psychEngineVersion}';
 
 		textField.text = text;
 
