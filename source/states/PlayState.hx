@@ -2270,17 +2270,19 @@ class PlayState extends MusicBeatState
 
 	private function popUpScore(note:Note = null):Void
 	{
-		var noteDiff:Float = Math.abs(note.strumTime - Conductor.songPosition + ClientPrefs.data.ratingOffset);
+		var noteDiff:Float = note.strumTime - Conductor.songPosition + ClientPrefs.data.ratingOffset;
+		var noteDiffAbs:Float = Math.abs(noteDiff);
 		vocals.volume = 1;
 
 		if (ClientPrefs.data.showMsText) {
 			msTimeTxt.alpha = 1;
-			var msStr = Std.string(FlxMath.roundDecimal(noteDiff, 2));
-			var dotPos = msStr.indexOf(".");
-			if (dotPos == -1) {
-				msStr += ".00";
-			} else if (msStr.length < dotPos + 3) {
-				msStr = StringTools.rpad(msStr, "0", dotPos + 3);
+			var rounded = FlxMath.roundDecimal(noteDiff, 2);
+			var msStr = Std.string(rounded);
+			if (msStr.indexOf(".") != -1) {
+				msStr = ~/0+$/.replace(msStr, "");
+				if (msStr.charAt(msStr.length - 1) == '.') {
+					msStr = msStr.substring(0, msStr.length - 1);
+				}
 			}
 			msTimeTxt.text = msStr + "ms";
 			if (msTimeTxtTween != null) {
@@ -2467,6 +2469,7 @@ class PlayState extends MusicBeatState
 
 		//var lastTime:Float = Conductor.songPosition;
 		//if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time;
+		//判定修改（？）
 
 		var plrInputNotes:Array<Note> = notes.members.filter(function(n:Note):Bool {
 			var canHit:Bool = !strumsBlocked[n.noteData] && n.canBeHit && n.mustPress && !n.tooLate && !n.wasGoodHit && !n.blockHit;
@@ -2506,6 +2509,7 @@ class PlayState extends MusicBeatState
 		if(!keysPressed.contains(key)) keysPressed.push(key);
 
 		//Conductor.songPosition = lastTime;
+		//判定修改（？）
 
 		var spr:StrumNote = playerStrums.members[key];
 		if(strumsBlocked[key] != true && spr != null && spr.animation.curAnim.name != 'confirm')
