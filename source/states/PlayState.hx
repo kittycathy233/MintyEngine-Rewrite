@@ -20,6 +20,7 @@ import lime.utils.Assets;
 import openfl.utils.Assets as OpenFlAssets;
 import openfl.events.KeyboardEvent;
 import haxe.Json;
+import StringTools;
 
 import cutscenes.CutsceneHandler;
 import cutscenes.DialogueBoxPsych;
@@ -2242,10 +2243,12 @@ class PlayState extends MusicBeatState
 
 		if (ClientPrefs.data.showMsText) {
 			msTimeTxt.alpha = 1;
-			var msStr = Std.string(noteDiff);
+			var msStr = Std.string(FlxMath.roundDecimal(noteDiff, 2));
 			var dotPos = msStr.indexOf(".");
-			if (dotPos != -1 && msStr.length > dotPos + 3) {
-				msStr = msStr.substr(0, dotPos + 3);
+			if (dotPos == -1) {
+				msStr += ".00";
+			} else if (msStr.length < dotPos + 3) {
+				msStr = StringTools.rpad(msStr, "0", dotPos + 3);
 			}
 			msTimeTxt.text = msStr + "ms";
 			if (msTimeTxtTween != null) {
@@ -2428,11 +2431,9 @@ class PlayState extends MusicBeatState
 		var ret:Dynamic = callOnScripts('onKeyPressPre', [key]);
 		if(ret == LuaUtils.Function_Stop) return;
 
-		// more accurate hit time for the ratings?
-		//var lastTime:Float = Conductor.songPosition;
-		//if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time;
+		var lastTime:Float = Conductor.songPosition;
+		if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time;
 
-		// obtain notes that the player can hit
 		var plrInputNotes:Array<Note> = notes.members.filter(function(n:Note):Bool {
 			var canHit:Bool = !strumsBlocked[n.noteData] && n.canBeHit && n.mustPress && !n.tooLate && !n.wasGoodHit && !n.blockHit;
 			return n != null && canHit && !n.isSustainNote && n.noteData == key;
@@ -2470,8 +2471,7 @@ class PlayState extends MusicBeatState
 		//									- Shadow Mario
 		if(!keysPressed.contains(key)) keysPressed.push(key);
 
-		//more accurate hit time for the ratings? part 2 (Now that the calculations are done, go back to the time it was before for not causing a note stutter)
-		//Conductor.songPosition = lastTime;
+		Conductor.songPosition = lastTime;
 
 		var spr:StrumNote = playerStrums.members[key];
 		if(strumsBlocked[key] != true && spr != null && spr.animation.curAnim.name != 'confirm')
