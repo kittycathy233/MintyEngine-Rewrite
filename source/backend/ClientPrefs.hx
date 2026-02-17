@@ -100,6 +100,7 @@ import states.TitleState;
 	public var hideWatermark:Bool = false;
 	public var hideScoreText:Bool = false;
 	public var scoreTxtStyle:String = 'OS'; // 'OS' or 'Psych'
+	public var removePerfects:Bool = false;
 }
 
 class ClientPrefs {

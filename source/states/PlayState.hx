@@ -292,6 +292,8 @@ class PlayState extends MusicBeatState
 		// for lua
 		instance = this;
 
+		ratingsData = Rating.loadDefault();
+
 		PauseSubState.songName = null; //Reset to default
 		playbackRate = ClientPrefs.getGameplaySetting('songspeed');
 
@@ -1227,10 +1229,12 @@ class PlayState extends MusicBeatState
 
 	public dynamic function fullComboFunction()
 	{
-		var sicks:Int = ratingsData[0].hits;
-		var goods:Int = ratingsData[1].hits;
-		var bads:Int = ratingsData[2].hits;
-		var shits:Int = ratingsData[3].hits;
+		var hasPerfects:Bool = !ClientPrefs.data.removePerfects;
+		var perfects:Int = hasPerfects ? ratingsData[0].hits : 0;
+		var sicks:Int = hasPerfects ? ratingsData[1].hits : ratingsData[0].hits;
+		var goods:Int = hasPerfects ? ratingsData[2].hits : ratingsData[1].hits;
+		var bads:Int = hasPerfects ? ratingsData[3].hits : ratingsData[2].hits;
+		var shits:Int = hasPerfects ? ratingsData[4].hits : ratingsData[3].hits;
 
 		ratingFC = "";
 		if(songMisses == 0)
@@ -1238,6 +1242,7 @@ class PlayState extends MusicBeatState
 			if (bads > 0 || shits > 0) ratingFC = 'FC';
 			else if (goods > 0) ratingFC = 'GFC';
 			else if (sicks > 0) ratingFC = 'SFC';
+			else if (hasPerfects && perfects > 0) ratingFC = 'PFC';
 		}
 		else {
 			if (songMisses < 10) ratingFC = 'SDCB';
@@ -2322,7 +2327,7 @@ class PlayState extends MusicBeatState
 			if(!note.ratingDisabled)
 			{
 				songHits++;
-				allNotesMs += noteDiff;
+				allNotesMs += Math.abs(noteDiff);
 				averageMs = allNotesMs / songHits;
 				totalPlayed++;
 				RecalculateRating(false);

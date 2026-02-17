@@ -97,6 +97,22 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		option.decimals = 1;
 		addOption(option);
 
+		var option:Option = new Option('Remove Perfects',
+			'If checked, removes the "Perfect!" rating.',
+			'removePerfects',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Perfect! Hit Window',
+			'Changes the amount of time you have\nfor hitting a "Perfect!" in milliseconds.',
+			'perfectWindow',
+			'int');
+		option.displayFormat = '%vms';
+		option.scrollSpeed = 5;
+		option.minValue = 5;
+		option.maxValue = 35;
+		addOption(option);
+
 		var option:Option = new Option('Sick! Hit Window',
 			'Changes the amount of time you have\nfor hitting a "Sick!" in milliseconds.',
 			'sickWindow',
