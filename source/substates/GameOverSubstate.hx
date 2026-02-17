@@ -5,11 +5,16 @@ import backend.WeekData;
 import objects.Character;
 import flixel.FlxObject;
 import flixel.FlxSubState;
+import flixel.tweens.FlxTween;
 
 import states.StoryMenuState;
 import states.FreeplayState;
 
 import lime.ui.Haptic;
+
+#if (cpp && windows)
+import hxwindowmode.WindowColorMode;
+#end
 
 class GameOverSubstate extends MusicBeatSubstate
 {
@@ -17,6 +22,8 @@ class GameOverSubstate extends MusicBeatSubstate
 	var camFollow:FlxObject;
 	var moveCamera:Bool = false;
 	var playingDeathSound:Bool = false;
+	var windowColorTween:FlxTween = null;
+	var colorTransitionObj:Dynamic = {progress: 0};
 
 	var stageSuffix:String = "";
 
@@ -65,6 +72,12 @@ class GameOverSubstate extends MusicBeatSubstate
 
 		boyfriend.playAnim('firstDeath');
 
+		#if (cpp && windows)
+		WindowColorMode.setDarkMode();
+		WindowColorMode.setWindowBorderColor([0, 0, 0], true, false);
+		if (WindowColorMode.isWindows10) WindowColorMode.redrawWindowHeader();
+		#end
+
 		camFollow = new FlxObject(0, 0, 1, 1);
 		camFollow.setPosition(boyfriend.getGraphicMidpoint().x + boyfriend.cameraPosition[0], boyfriend.getGraphicMidpoint().y + boyfriend.cameraPosition[1]);
 		FlxG.camera.focusOn(new FlxPoint(FlxG.camera.scroll.x + (FlxG.camera.width / 2), FlxG.camera.scroll.y + (FlxG.camera.height / 2)));
@@ -100,6 +113,13 @@ class GameOverSubstate extends MusicBeatSubstate
 			PlayState.deathCounter = 0;
 			PlayState.seenCutscene = false;
 			PlayState.chartingMode = false;
+
+			#if (cpp && windows)
+			if (windowColorTween != null) windowColorTween.cancel();
+			WindowColorMode.setLightMode();
+			WindowColorMode.setWindowBorderColor([255, 255, 255], true, false);
+			if (WindowColorMode.isWindows10) WindowColorMode.redrawWindowHeader();
+			#end
 
 			Mods.loadTopMod();
 			if (PlayState.isStoryMode)
@@ -169,6 +189,34 @@ class GameOverSubstate extends MusicBeatSubstate
 			boyfriend.playAnim('deathConfirm', true);
 			FlxG.sound.music.stop();
 			FlxG.sound.play(Paths.music(endSoundName));
+			
+			#if (cpp && windows)
+			var startColor:Array<Int> = PlayState.instance.boyfriend.healthColorArray;
+			var endColor:Array<Int> = [255, 255, 255];
+			var duration:Float = 1.5;
+			
+			if (windowColorTween != null) windowColorTween.cancel();
+			
+			colorTransitionObj.progress = 0;
+			windowColorTween = FlxTween.tween(colorTransitionObj, {progress: 1}, duration, {
+				onUpdate: function(tween:FlxTween) {
+					var progress:Float = colorTransitionObj.progress;
+					var currentColor:Array<Int> = [
+						Std.int(startColor[0] + (endColor[0] - startColor[0]) * progress),
+						Std.int(startColor[1] + (endColor[1] - startColor[1]) * progress),
+						Std.int(startColor[2] + (endColor[2] - startColor[2]) * progress)
+					];
+					WindowColorMode.setWindowBorderColor(currentColor, true, false);
+					if (WindowColorMode.isWindows10) WindowColorMode.redrawWindowHeader();
+				},
+				onComplete: function(tween:FlxTween) {
+					WindowColorMode.setLightMode();
+					WindowColorMode.setWindowBorderColor(endColor, true, false);
+					if (WindowColorMode.isWindows10) WindowColorMode.redrawWindowHeader();
+				}
+			});
+			#end
+			
 			new FlxTimer().start(0.7, function(tmr:FlxTimer)
 			{
 				FlxG.camera.fade(FlxColor.BLACK, 2, false, function()
@@ -182,6 +230,8 @@ class GameOverSubstate extends MusicBeatSubstate
 
 	override function destroy()
 	{
+		if (windowColorTween != null) windowColorTween.cancel();
+		windowColorTween = null;
 		instance = null;
 		super.destroy();
 	}
