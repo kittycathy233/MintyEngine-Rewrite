@@ -525,8 +525,8 @@ class NoteOffsetState extends MusicBeatState
 
 	function updateNoteDelay()
 	{
-		ClientPrefs.data.noteOffset = Math.round(barPercent);
-		timeTxt.text = 'Current offset: ' + Math.floor(barPercent) + ' ms';
+		ClientPrefs.data.noteOffset = barPercent;
+		timeTxt.text = 'Current offset: ' + FlxMath.roundDecimal(barPercent, 2) + ' ms';
 	}
 
 	function updateMode()

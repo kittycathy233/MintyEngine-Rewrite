@@ -43,7 +43,7 @@ import states.TitleState;
 	public var framerate:Int = 120;
 	public var camZooms:Bool = true;
 	public var hideHud:Bool = false;
-	public var noteOffset:Int = 0;
+	public var noteOffset:Float = 0;
 	public var arrowRGB:Array<Array<FlxColor>> = [
 		[0xFFC24B99, 0xFFFFFFFF, 0xFF3C1F56],
 		[0xFF00FFFF, 0xFFFFFFFF, 0xFF1542B7],
@@ -87,7 +87,7 @@ import states.TitleState;
 	];
 
 	public var comboOffset:Array<Int> = [0, 0, 0, 0];
-	public var ratingOffset:Int = 0;
+	public var ratingOffset:Float = 0;
 	public var perfectWindow:Int = 20;
 	public var sickWindow:Int = 45;
 	public var goodWindow:Int = 90;
