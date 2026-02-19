@@ -377,7 +377,15 @@ class HScriptSScript extends HScriptBase {
 	}
 
 	override public function call(funcToRun:String, ?args:Array<Dynamic>):Dynamic {
-		return sscript.call(funcToRun, args);
+		if (funcToRun == null) return {succeeded: false, returnValue: null, exceptions: []};
+
+		try {
+			var result:Dynamic = sscript.call(funcToRun, args);
+			return {succeeded: true, returnValue: result, exceptions: []};
+		} catch(e:Dynamic) {
+			if(PlayState.instance != null) PlayState.instance.addTextToDebug('Error calling function ' + funcToRun + ': ' + e, FlxColor.RED);
+			return {succeeded: false, returnValue: null, exceptions: [e]};
+		}
 	}
 
 	override public function exists(funcToRun:String):Bool {
@@ -670,17 +678,17 @@ class HScriptIris extends HScriptBase {
 	}
 
 	override public function call(funcToRun:String, ?args:Array<Dynamic>):Dynamic {
-		if (funcToRun == null) return {succeeded: false, returnValue: null};
+		if (funcToRun == null) return {succeeded: false, returnValue: null, exceptions: []};
 
 		try {
 			var result:Dynamic = iris.call(funcToRun, args);
-			return {succeeded: true, returnValue: result};
+			return {succeeded: true, returnValue: result, exceptions: []};
 		} catch(e:Dynamic) {
 			if (FlxG.state != null && Type.getClassName(Type.getClass(FlxG.state)) == "PlayState") {
 				Reflect.callMethod(FlxG.state, Reflect.field(FlxG.state, "addTextToDebug"), ["Error calling function " + funcToRun + ": " + e, FlxColor.RED]);
 			}
+			return {succeeded: false, returnValue: null, exceptions: [e]};
 		}
-		return {succeeded: false, returnValue: null};
 	}
 
 	override public function exists(funcToRun:String):Bool {
