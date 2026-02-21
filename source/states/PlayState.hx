@@ -63,8 +63,6 @@ import psychlua.HScript;
 import tea.SScript;
 #end
 
-import modchart.Manager;
-
 /**
  * This is where all the Gameplay stuff happens and is managed
  *
@@ -1909,7 +1907,7 @@ class PlayState extends MusicBeatState
 		}
 		#end
 
-
+		if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time;
 
 		setOnScripts('cameraX', camFollow.x);
 		setOnScripts('cameraY', camFollow.y);
@@ -1939,13 +1937,7 @@ class PlayState extends MusicBeatState
 	public function updateWatermarkText()
 	{
 		if (watermarkTxt != null)
-		{
-			#if DISCORD_ALLOWED
 			watermarkTxt.text = curSong + " (" + storyDifficultyText + ") | MTE v" + MainMenuState.mintyEngineVersion;
-			#else
-			watermarkTxt.text = curSong + " | MTE v" + MainMenuState.mintyEngineVersion;
-			#end
-		}
 	}
 
 	var iconsAnimations:Bool = true;

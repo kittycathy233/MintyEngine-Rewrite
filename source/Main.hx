@@ -16,8 +16,6 @@ import lime.app.Application;
 import states.TitleState;
 import mobile.backend.MobileScaleMode;
 import openfl.events.KeyboardEvent;
-import flixel.input.android.FlxAndroidKey;
-import flixel.input.keyboard.FlxKey;
 #if COPYSTATE_ALLOWED
 import states.CopyState;
 #end
@@ -155,7 +153,7 @@ class Main extends Sprite
 		#end
 
 		#if android
-		FlxG.android.preventDefaultKeys = [FlxAndroidKey.BACK];
+		FlxG.android.preventDefaultKeys = [BACK];
 		#end
 
 		#if mobile
