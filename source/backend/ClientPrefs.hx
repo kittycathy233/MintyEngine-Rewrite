@@ -101,7 +101,9 @@ import states.TitleState;
 	public var hideScoreText:Bool = false;
 	public var scoreTxtStyle:String = 'OS'; // 'OS' or 'Psych'
 	public var removePerfects:Bool = false;
+	public var useSickForMissingPerfect:Bool = true;
 	public var osIconStyle:Bool = true; // Enable OS-style 3-frame icons (normal, losing, winning)
+	public var showResultsScreen:Bool = true; // Show results screen after song ends
 }
 
 class ClientPrefs {
@@ -237,10 +239,9 @@ class ClientPrefs {
 		}
 	#end
 
-	// Always set both update and draw framerate to match the user preference
-	// This ensures the game runs at the desired framerate regardless of initial values
-	FlxG.updateFramerate = data.framerate;
+	// Set draw framerate to user preference, update framerate to 1.5x draw framerate
 	FlxG.drawFramerate = data.framerate;
+	FlxG.updateFramerate = Std.int(FlxG.drawFramerate * 1.5);
 
 		if(FlxG.save.data.gameplaySettings != null)
 		{

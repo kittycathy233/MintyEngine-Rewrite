@@ -30,6 +30,10 @@ class Option
 	public var description:String = '';
 	public var name:String = 'Unknown';
 
+	public var dependsOn:String = null;
+	public var dependsOnValue:Dynamic = true;
+	public var isDisabled(get, null):Bool = false;
+
 	public var defaultKeys:Keybind = null; //Only used in keybind type
 	public var keys:Keybind = null; //Only used in keybind type
 
@@ -140,5 +144,14 @@ class Option
 		}
 		type = newValue;
 		return type;
+	}
+
+	private function get_isDisabled():Bool
+	{
+		if (dependsOn == null) return false;
+		var depValue:Dynamic = Reflect.getProperty(ClientPrefs.data, dependsOn);
+		if (Std.isOfType(dependsOnValue, Bool))
+			return depValue != dependsOnValue;
+		return depValue != dependsOnValue;
 	}
 }

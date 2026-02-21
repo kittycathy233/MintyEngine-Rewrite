@@ -18,6 +18,7 @@ class PrecisionConductor
 	private static var highPrecisionTime:Float = 0;
 	private static var lastUpdateTime:Float = 0;
 	private static var isInitialized:Bool = false;
+	private static var isPaused:Bool = false;
 
 	public static function initialize():Void
 	{
@@ -26,6 +27,24 @@ class PrecisionConductor
 			highPrecisionTime = 0;
 			lastUpdateTime = haxe.Timer.stamp();
 			isInitialized = true;
+			isPaused = false;
+		}
+	}
+
+	public static function pause():Void
+	{
+		if (!isPaused)
+		{
+			isPaused = true;
+		}
+	}
+
+	public static function resume():Void
+	{
+		if (isPaused)
+		{
+			isPaused = false;
+			lastUpdateTime = haxe.Timer.stamp();
 		}
 	}
 
@@ -33,10 +52,13 @@ class PrecisionConductor
 	{
 		if (!isInitialized) initialize();
 
-		var currentTime:Float = haxe.Timer.stamp();
-		var deltaTime:Float = currentTime - lastUpdateTime;
-		highPrecisionTime += deltaTime * 1000 * playbackRate;
-		lastUpdateTime = currentTime;
+		if (!isPaused)
+		{
+			var currentTime:Float = haxe.Timer.stamp();
+			var deltaTime:Float = currentTime - lastUpdateTime;
+			highPrecisionTime += deltaTime * 1000 * playbackRate;
+			lastUpdateTime = currentTime;
+		}
 
 		songPosition = highPrecisionTime;
 	}
@@ -48,6 +70,15 @@ class PrecisionConductor
 		highPrecisionTime = time;
 		songPosition = time;
 		lastUpdateTime = haxe.Timer.stamp();
+	}
+
+	public static function reset():Void
+	{
+		highPrecisionTime = 0;
+		songPosition = 0;
+		lastUpdateTime = haxe.Timer.stamp();
+		isPaused = false;
+		isInitialized = true;
 	}
 
 	public static function judgeNote(arr:Array<Rating>, diff:Float=0):Rating

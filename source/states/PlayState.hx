@@ -34,6 +34,7 @@ import states.editors.CharacterEditorState;
 
 import substates.PauseSubState;
 import substates.GameOverSubstate;
+import substates.ResultsScreen;
 
 #if !flash
 import flixel.addons.display.FlxRuntimeShader;
@@ -228,6 +229,8 @@ class PlayState extends MusicBeatState
 	var allNotesMs:Float = 0;
 	var averageMs:Float = 0;
 
+	public var hitHistory:Array<Array<Dynamic>> = [];
+
 	public static var campaignScore:Int = 0;
 	public static var campaignMisses:Int = 0;
 	public static var seenCutscene:Bool = false;
@@ -296,6 +299,7 @@ class PlayState extends MusicBeatState
 		instance = this;
 
 		ratingsData = Rating.loadDefault();
+		hitHistory = [];
 
 		PauseSubState.songName = null; //Reset to default
 		playbackRate = ClientPrefs.getGameplaySetting('songspeed');
@@ -584,7 +588,7 @@ class PlayState extends MusicBeatState
 
 		var isOSStyle:Bool = ClientPrefs.data.scoreTxtStyle == 'OS' || ClientPrefs.data.scoreTxtStyle == 'OS(Detailed)';
 		var scoreTxtSize:Int = isOSStyle ? 16 : 20;
-		var scoreTxtY:Float = isOSStyle ? healthBar.y + 33 : healthBar.y + 40;
+		var scoreTxtY:Float = isOSStyle ? healthBar.y + 28 : healthBar.y + 40;
 		scoreTxt = new FlxText(0, scoreTxtY, FlxG.width, "", scoreTxtSize);
 		scoreTxt.setFormat(Paths.font("vcr.ttf"), scoreTxtSize, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scoreTxt.scrollFactor.set();
@@ -1625,6 +1629,7 @@ class PlayState extends MusicBeatState
 			FlxTween.globalManager.forEach(function(twn:FlxTween) if(!twn.finished) twn.active = true);
 
 			paused = false;
+			PrecisionConductor.resume();
 			callOnScripts('onResume');
 			resetRPC(startTimer != null && startTimer.finished);
 		}
@@ -1632,12 +1637,20 @@ class PlayState extends MusicBeatState
 
 	override public function onFocus():Void
 	{
-		if (health > 0 && !paused) resetRPC(Conductor.songPosition > 0.0);
+		if (health > 0 && !paused)
+		{
+			PrecisionConductor.resume();
+			resetRPC(Conductor.songPosition > 0.0);
+		}
 		super.onFocus();
 	}
 
 	override public function onFocusLost():Void
 	{
+		if (health > 0 && !paused)
+		{
+			PrecisionConductor.pause();
+		}
 		#if DISCORD_ALLOWED
 		if (health > 0 && !paused && autoUpdateRPC) DiscordClient.changePresence(detailsPausedText, SONG.song + " (" + storyDifficultyText + ")", iconP2.getCharacter());
 		#end
@@ -1997,6 +2010,7 @@ class PlayState extends MusicBeatState
 		persistentUpdate = false;
 		persistentDraw = true;
 		paused = true;
+		PrecisionConductor.pause();
 
 		if(FlxG.sound.music != null) {
 			FlxG.sound.music.pause();
@@ -2024,6 +2038,7 @@ class PlayState extends MusicBeatState
 		FlxG.camera.followLerp = 0;
 		persistentUpdate = false;
 		paused = true;
+		PrecisionConductor.pause();
 		if(FlxG.sound.music != null)
 			FlxG.sound.music.stop();
 		chartingMode = true;
@@ -2041,6 +2056,7 @@ class PlayState extends MusicBeatState
 		FlxG.camera.followLerp = 0;
 		persistentUpdate = false;
 		paused = true;
+		PrecisionConductor.pause();
 		if(FlxG.sound.music != null)
 			FlxG.sound.music.stop();
 		#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
@@ -2058,6 +2074,7 @@ class PlayState extends MusicBeatState
 				deathCounter++;
 
 				paused = true;
+				PrecisionConductor.pause();
 
 				vocals.stop();
 				opponentVocals.stop();
@@ -2279,13 +2296,22 @@ class PlayState extends MusicBeatState
 			}
 			else
 			{
-				trace('WENT BACK TO FREEPLAY??');
-				Mods.loadTopMod();
-				#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
+				if(ClientPrefs.data.showResultsScreen)
+				{
+					KillNotes();
+					isDead = true;
+					openSubState(new ResultsScreen());
+				}
+				else
+				{
+					trace('WENT BACK TO FREEPLAY??');
+					Mods.loadTopMod();
+					#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
 
-				MusicBeatState.switchState(new FreeplayState());
-				FlxG.sound.playMusic(Paths.music('freakyMenu'));
-				changedDifficulty = false;
+					MusicBeatState.switchState(new FreeplayState());
+					FlxG.sound.playMusic(Paths.music('freakyMenu'));
+					changedDifficulty = false;
+				}
 			}
 			transitioning = true;
 		}
@@ -2384,6 +2410,11 @@ class PlayState extends MusicBeatState
 		note.rating = daRating.name;
 		score = daRating.score;
 
+		if(!note.ratingDisabled)
+		{
+			hitHistory.push([noteDiff, daRating.name, note.strumTime]);
+		}
+
 		if(daRating.noteSplash && !note.noteSplashData.disabled)
 			spawnNoteSplashOnNote(note);
 
@@ -2411,7 +2442,7 @@ class PlayState extends MusicBeatState
 		}
 
 		if(ClientPrefs.data.popUpRating) {
-		rating.loadGraphic(Paths.image(uiPrefix + daRating.image + uiSuffix));
+		rating.loadGraphic(Paths.image(Rating.getRatingImage(daRating.name, uiPrefix, uiSuffix)));
 		rating.screenCenter();
 		rating.x = placement - 40;
 		rating.y -= 60;

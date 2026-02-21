@@ -97,10 +97,24 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		option.decimals = 1;
 		addOption(option);
 
+		var option:Option = new Option('Results Screen',
+			'If checked, shows the results screen after finishing a song.',
+			'showResultsScreen',
+			'bool');
+		addOption(option);
+
 		var option:Option = new Option('Remove Perfects',
 			'If checked, removes the "Perfect!" rating.',
 			'removePerfects',
 			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Use Sick for Missing Perfect',
+			"If checked, Perfect ratings will use Sick texture when\nPerfect texture is missing (for mod compatibility).",
+			'useSickForMissingPerfect',
+			'bool');
+		option.dependsOn = 'removePerfects';
+		option.dependsOnValue = false;
 		addOption(option);
 
 		var option:Option = new Option('Perfect! Hit Window',
@@ -111,6 +125,8 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		option.scrollSpeed = 5;
 		option.minValue = 5;
 		option.maxValue = 35;
+		option.dependsOn = 'removePerfects';
+		option.dependsOnValue = false;
 		addOption(option);
 
 		var option:Option = new Option('Sick! Hit Window',

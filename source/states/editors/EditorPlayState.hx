@@ -596,7 +596,7 @@ class EditorPlayState extends MusicBeatSubstate
 		var pixelShitPart1:String = "";
 		var pixelShitPart2:String = '';
 
-		rating.loadGraphic(Paths.image(pixelShitPart1 + daRating.image + pixelShitPart2));
+		rating.loadGraphic(Paths.image(Rating.getRatingImage(daRating.name, pixelShitPart1, pixelShitPart2)));
 		rating.screenCenter();
 		rating.x = coolText.x - 40;
 		rating.y -= 60;

@@ -152,6 +152,8 @@ class FPSCounter extends Sprite
 	var deltaTimeout:Float = 0.0;
 	var lastFrameTime:Float = 0;
 	var startTime:Float = 0;
+	var lastTextUpdateTime:Float = 0;
+	var textUpdateInterval:Float = 100; // 更新间隔，单位毫秒
 
 	function updateFramerateInfo()
 	{
@@ -201,7 +203,12 @@ class FPSCounter extends Sprite
 		totalFrames++;
 		averageFPS = totalFrames / totalRuntime;
 
-		updateText();
+		// 减少文本更新频率，提高性能
+		if (now - lastTextUpdateTime > textUpdateInterval) {
+			updateText();
+			lastTextUpdateTime = now;
+		}
+
 		deltaTimeout += deltaTime;
 	}
 
@@ -211,7 +218,9 @@ class FPSCounter extends Sprite
 		if (currentMem > peakMemory) peakMemory = currentMem;
 		if (minMemory == 0 || currentMem < minMemory) minMemory = currentMem;
 
-		updateFramerateInfo();
+		// 减少 updateFramerateInfo 的调用频率，因为它涉及到平台特定的操作
+		if (haxe.Timer.stamp() % 1 > 0.9) // 大约每秒调用一次
+			updateFramerateInfo();
 
 		var text = '';
 		
@@ -252,21 +261,29 @@ class FPSCounter extends Sprite
 		if (ClientPrefs.data.showEngineVersion)
 			text += '\nMinty ${MainMenuState.mintyEngineVersion} | Psych ${MainMenuState.psychEngineVersion}';
 
-		textField.text = text;
+		// 只有当文本真正改变时才更新 TextField
+		if (textField.text != text) {
+			textField.text = text;
 
-		textField.width = textField.textWidth + 10;
-		textField.height = textField.textHeight + 4;
+			textField.width = textField.textWidth + 10;
+			textField.height = textField.textHeight + 4;
 
-		bg.graphics.clear();
-		bg.graphics.beginFill(0x000000);
-		bg.graphics.drawRect(0, 0, textField.width, textField.height);
-		bg.graphics.endFill();
+			bg.graphics.clear();
+			bg.graphics.beginFill(0x000000);
+			bg.graphics.drawRect(0, 0, textField.width, textField.height);
+			bg.graphics.endFill();
+		}
 
-		textField.textColor = 0xFFFFFFFF;
+		// 根据 FPS 动态调整文本颜色
+		var newColor:Int = 0xFFFFFFFF;
 		if (currentFPS < FlxG.drawFramerate * 0.5)
-			textField.textColor = 0xFFFF0000;
+			newColor = 0xFFFF0000;
 		else if (currentFPS < FlxG.drawFramerate * 0.75)
-			textField.textColor = 0xFFFFFF00;
+			newColor = 0xFFFFFF00;
+
+		// 只有当颜色真正改变时才更新
+		if (textField.textColor != newColor)
+			textField.textColor = newColor;
 	}
 
 	inline function get_memoryMegas():Float
@@ -317,6 +334,16 @@ class FPSCounter extends Sprite
 		averageFPS = 0;
 		frameTimes = [];
 		startTime = haxe.Timer.stamp() * 1000;
+	}
+
+	public function toggleDisplayMode():Void
+	{
+		var modes:Array<String> = ['Simple', 'Detailed', 'Advanced', 'Full'];
+		var currentIndex = modes.indexOf(ClientPrefs.data.fpsDisplayMode);
+		if (currentIndex == -1) currentIndex = 0;
+		var nextIndex = (currentIndex + 1) % modes.length;
+		ClientPrefs.data.fpsDisplayMode = modes[nextIndex];
+		ClientPrefs.saveSettings();
 	}
 
 	#if cpp

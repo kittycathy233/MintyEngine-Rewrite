@@ -77,10 +77,9 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 
 	function onChangeFramerate()
 	{
-		// Always set both update and draw framerate to match the user preference
-		// This ensures the game runs at the desired framerate regardless of current values
-		FlxG.updateFramerate = ClientPrefs.data.framerate;
+		// Set draw framerate to user preference, update framerate to 1.5x draw framerate
 		FlxG.drawFramerate = ClientPrefs.data.framerate;
+		FlxG.updateFramerate = Std.int(FlxG.drawFramerate * 1.5);
 	}
 
 	override function changeSelection(change:Int = 0)

@@ -161,13 +161,14 @@ class BaseOptionsMenu extends MusicBeatSubstate
 					curOption.setValue((curOption.getValue() == true) ? false : true);
 					curOption.change();
 					reloadCheckboxes();
+					updateOptionVisibility();
 				}
 			}
 			else
 			{
 				if(curOption.type == 'keybind')
 				{
-					if(controls.ACCEPT)
+					if(controls.ACCEPT && !curOption.isDisabled)
 					{
 						bindingBlack = new FlxSprite().makeGraphic(1, 1, FlxColor.WHITE);
 						bindingBlack.scale.set(FlxG.width, FlxG.height);
@@ -200,72 +201,79 @@ class BaseOptionsMenu extends MusicBeatSubstate
 				}
 				else if(controls.UI_LEFT || controls.UI_RIGHT)
 				{
-					var pressed = (controls.UI_LEFT_P || controls.UI_RIGHT_P);
-					if(holdTime > 0.5 || pressed)
+					if (curOption.isDisabled)
 					{
-						if(pressed)
-						{
-							var add:Dynamic = null;
-							if(curOption.type != 'string')
-								add = controls.UI_LEFT ? -curOption.changeValue : curOption.changeValue;
-
-							switch(curOption.type)
-							{
-								case 'int' | 'float' | 'percent':
-									holdValue = curOption.getValue() + add;
-									if(holdValue < curOption.minValue) holdValue = curOption.minValue;
-									else if (holdValue > curOption.maxValue) holdValue = curOption.maxValue;
-
-									switch(curOption.type)
-									{
-										case 'int':
-											holdValue = Math.round(holdValue);
-											curOption.setValue(holdValue);
-
-										case 'float' | 'percent':
-											holdValue = FlxMath.roundDecimal(holdValue, curOption.decimals);
-											curOption.setValue(holdValue);
-									}
-
-								case 'string':
-									var num:Int = curOption.curOption; //lol
-									if(controls.UI_LEFT_P) --num;
-									else num++;
-
-									if(num < 0)
-										num = curOption.options.length - 1;
-									else if(num >= curOption.options.length)
-										num = 0;
-
-									curOption.curOption = num;
-									curOption.setValue(curOption.options[num]); //lol
-									//trace(curOption.options[num]);
-							}
-							updateTextFrom(curOption);
-							curOption.change();
-							FlxG.sound.play(Paths.sound('scrollMenu'));
-						}
-						else if(curOption.type != 'string')
-						{
-							holdValue += curOption.scrollSpeed * elapsed * (controls.UI_LEFT ? -1 : 1);
-							if(holdValue < curOption.minValue) holdValue = curOption.minValue;
-							else if (holdValue > curOption.maxValue) holdValue = curOption.maxValue;
-
-							switch(curOption.type)
-							{
-								case 'int':
-									curOption.setValue(Math.round(holdValue));
-								
-								case 'float' | 'percent':
-									curOption.setValue(FlxMath.roundDecimal(holdValue, curOption.decimals));
-							}
-							updateTextFrom(curOption);
-							curOption.change();
-						}
+						FlxG.sound.play(Paths.sound('cancelMenu'));
 					}
+					else
+					{
+						var pressed = (controls.UI_LEFT_P || controls.UI_RIGHT_P);
+						if(holdTime > 0.5 || pressed)
+						{
+							if(pressed)
+							{
+								var add:Dynamic = null;
+								if(curOption.type != 'string')
+									add = controls.UI_LEFT ? -curOption.changeValue : curOption.changeValue;
 
-					if(curOption.type != 'string')
-						holdTime += elapsed;
+								switch(curOption.type)
+								{
+									case 'int' | 'float' | 'percent':
+										holdValue = curOption.getValue() + add;
+										if(holdValue < curOption.minValue) holdValue = curOption.minValue;
+										else if (holdValue > curOption.maxValue) holdValue = curOption.maxValue;
+
+										switch(curOption.type)
+										{
+											case 'int':
+												holdValue = Math.round(holdValue);
+												curOption.setValue(holdValue);
+
+											case 'float' | 'percent':
+												holdValue = FlxMath.roundDecimal(holdValue, curOption.decimals);
+												curOption.setValue(holdValue);
+										}
+
+									case 'string':
+										var num:Int = curOption.curOption; //lol
+										if(controls.UI_LEFT_P) --num;
+										else num++;
+
+										if(num < 0)
+											num = curOption.options.length - 1;
+										else if(num >= curOption.options.length)
+											num = 0;
+
+										curOption.curOption = num;
+										curOption.setValue(curOption.options[num]); //lol
+										//trace(curOption.options[num]);
+								}
+								updateTextFrom(curOption);
+								curOption.change();
+								FlxG.sound.play(Paths.sound('scrollMenu'));
+							}
+							else if(curOption.type != 'string')
+							{
+								holdValue += curOption.scrollSpeed * elapsed * (controls.UI_LEFT ? -1 : 1);
+								if(holdValue < curOption.minValue) holdValue = curOption.minValue;
+								else if (holdValue > curOption.maxValue) holdValue = curOption.maxValue;
+
+								switch(curOption.type)
+								{
+									case 'int':
+										curOption.setValue(Math.round(holdValue));
+									
+									case 'float' | 'percent':
+										curOption.setValue(FlxMath.roundDecimal(holdValue, curOption.decimals));
+								}
+								updateTextFrom(curOption);
+								curOption.change();
+							}
+						}
+
+						if(curOption.type != 'string')
+							holdTime += elapsed;
+					}
 				}
 				else if(controls.UI_LEFT_R || controls.UI_RIGHT_R)
 				{
@@ -643,6 +651,55 @@ class BaseOptionsMenu extends MusicBeatSubstate
 
 		curOption = optionsArray[curSelected]; //shorter lol
 		FlxG.sound.play(Paths.sound('scrollMenu'));
+		updateOptionVisibility();
+	}
+
+	function updateOptionVisibility()
+	{
+		for (i in 0...optionsArray.length)
+		{
+			var option:Option = optionsArray[i];
+			var isDisabled:Bool = option.isDisabled;
+			
+			if (grpOptions.members[i] != null)
+			{
+				var item = grpOptions.members[i];
+				if (isDisabled)
+				{
+					item.alpha = 0.3;
+					item.color = FlxColor.GRAY;
+				}
+				else
+				{
+					item.color = FlxColor.WHITE;
+					if (item.targetY == 0) item.alpha = 1;
+					else item.alpha = 0.6;
+				}
+			}
+			
+			if (option.type == 'bool')
+			{
+				for (checkbox in checkboxGroup)
+				{
+					if (checkbox.ID == i)
+					{
+						checkbox.alpha = isDisabled ? 0.3 : 1;
+						break;
+					}
+				}
+			}
+			else
+			{
+				for (text in grpTexts)
+				{
+					if (text.ID == i)
+					{
+						text.alpha = isDisabled ? 0.3 : (i == curSelected ? 1 : 0.6);
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	function reloadCheckboxes()

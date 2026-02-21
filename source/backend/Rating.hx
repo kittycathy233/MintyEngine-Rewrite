@@ -1,6 +1,11 @@
 package backend;
 
 import backend.ClientPrefs;
+import backend.Paths;
+#if MODS_ALLOWED
+import backend.Mods;
+import sys.FileSystem;
+#end
 
 class Rating
 {
@@ -54,4 +59,51 @@ class Rating
 		ratingsData.push(rating);
 		return ratingsData;
 	}
+
+	public static function getRatingImage(ratingName:String, uiPrefix:String = "", uiSuffix:String = ""):String
+	{
+		var imagePath:String = uiPrefix + ratingName + uiSuffix;
+		
+		if (ratingName == 'perfect' && ClientPrefs.data.useSickForMissingPerfect)
+		{
+			if (!modImageExists(imagePath))
+			{
+				return uiPrefix + 'sick' + uiSuffix;
+			}
+		}
+		
+		return imagePath;
+	}
+
+	#if MODS_ALLOWED
+	private static function modImageExists(imageKey:String):Bool
+	{
+		var imagePath:String = 'images/$imageKey.png';
+		
+		if (Mods.currentModDirectory != null && Mods.currentModDirectory.length > 0)
+		{
+			var modPath:String = Paths.mods(Mods.currentModDirectory + '/' + imagePath);
+			if (FileSystem.exists(modPath))
+				return true;
+		}
+
+		for (mod in Mods.getGlobalMods())
+		{
+			var modPath:String = Paths.mods(mod + '/' + imagePath);
+			if (FileSystem.exists(modPath))
+				return true;
+		}
+
+		var mainModPath:String = Paths.mods(imagePath);
+		if (FileSystem.exists(mainModPath))
+			return true;
+
+		return false;
+	}
+	#else
+	private static function modImageExists(imageKey:String):Bool
+	{
+		return Paths.fileExists('images/$imageKey.png', IMAGE);
+	}
+	#end
 }
