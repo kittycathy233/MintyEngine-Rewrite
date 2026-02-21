@@ -140,7 +140,6 @@ class Main extends Sprite
 
 		#if desktop
 		FlxG.stage.addEventListener(KeyboardEvent.KEY_UP, toggleFullScreen);
-		FlxG.stage.addEventListener(KeyboardEvent.KEY_UP, toggleFPSDisplayMode);
 		#end
 
 		#if html5
@@ -187,15 +186,5 @@ class Main extends Sprite
 	function toggleFullScreen(event:KeyboardEvent){
 		if(Controls.instance.justReleased('fullscreen'))
 			FlxG.fullscreen = !FlxG.fullscreen;
-	}
-
-	function toggleFPSDisplayMode(event:KeyboardEvent){
-		if(event.keyCode == 114) // F3键的键码
-		{
-			if(fpsVar != null)
-			{
-				fpsVar.toggleDisplayMode();
-			}
-		}
 	}
 }
