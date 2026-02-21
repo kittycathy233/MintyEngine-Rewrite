@@ -67,10 +67,10 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		option.onChange = onChangeVibration;
 
 		var option:Option = new Option('HScript Engine',
-			"Choose which HScript engine to use.\nSScript: Default engine.\nIris: Newer engine with better features.",
+			"Choose which HScript engine to use.\nSScript: Default engine.",
 			'hscriptEngine',
 			'string',
-			['SScript', 'Iris']);
+			['SScript']);
 		addOption(option);
 
 		var option:Option = new Option('Hitsound Volume',
