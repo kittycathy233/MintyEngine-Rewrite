@@ -118,6 +118,8 @@
 	<haxelib name="funkin.vis"/>
 	<haxelib name="grig.audio" if="funkin.vis"/>
 	<haxelib name="hxWindowColorMode" version="0.2.1" if="windows"/>
+	<haxelib name="spine-haxe" version="4.2.9"/>
+	
 	<!-- Disable Discord IO Thread -->
 	<haxedef name="DISCORD_DISABLE_IO_THREAD" if="hxdiscord_rpc" />
 	<haxedef name="NO_PRECOMPILED_HEADERS" if="linux" />
