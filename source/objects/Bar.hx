@@ -120,12 +120,11 @@ class Bar extends FlxSpriteGroup
 		barCenter = leftBar.x + leftSize + barOffset.x;
 
 		if(stripedOverlay != null && showStripes)
-		{
-			stripedOverlay.setPosition(bg.x, bg.y);
-			stripedOverlay.clipRect = new FlxRect(barOffset.x, barOffset.y, barWidth, barHeight);
-			stripedOverlay.clipRect = stripedOverlay.clipRect;
-			stripedOverlay.visible = true;
-		}
+			{
+				stripedOverlay.clipRect = new FlxRect(barOffset.x, barOffset.y, barWidth, barHeight);
+				stripedOverlay.clipRect = stripedOverlay.clipRect;
+				stripedOverlay.visible = true;
+			}
 		else if(stripedOverlay != null)
 		{
 			stripedOverlay.visible = false;

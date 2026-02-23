@@ -517,6 +517,13 @@ class PlayState extends MusicBeatState
 		timeBar.screenCenter(X);
 		timeBar.alpha = 0;
 		timeBar.visible = showTime;
+		timeBar.showStripes = ClientPrefs.data.timeBarStripes;
+		timeBar.stripeWidth = 5;
+		timeBar.stripeGap = 10;
+		timeBar.stripeAngle = 45;
+		timeBar.stripeColor = FlxColor.WHITE;
+		timeBar.stripeBaseAlpha = 0.15;
+		timeBar.createStripedOverlay();
 		uiGroup.add(timeBar);
 		uiGroup.add(timeTxt);
 
@@ -565,7 +572,7 @@ class PlayState extends MusicBeatState
 		healthBar.scrollFactor.set();
 		healthBar.visible = !ClientPrefs.data.hideHud;
 		healthBar.alpha = ClientPrefs.data.healthBarAlpha;
-		healthBar.showStripes = true;
+		healthBar.showStripes = ClientPrefs.data.healthBarStripes;
 		healthBar.stripeWidth = 7;
 		healthBar.stripeGap = 12;
 		healthBar.stripeAngle = -45;

@@ -104,6 +104,8 @@ import states.TitleState;
 	public var useSickForMissingPerfect:Bool = true;
 	public var osIconStyle:Bool = true; // Enable OS-style 3-frame icons (normal, losing, winning)
 	public var showResultsScreen:Bool = true; // Show results screen after song ends
+	public var healthBarStripes:Bool = true;
+	public var timeBarStripes:Bool = false;
 }
 
 class ClientPrefs {

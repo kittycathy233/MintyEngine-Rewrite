@@ -146,6 +146,18 @@ class VisualsUISubState extends BaseOptionsMenu
 		option.decimals = 1;
 		addOption(option);
 
+		var option:Option = new Option('Health Bar Stripes',
+			'If checked, shows animated stripes on the health bar.',
+			'healthBarStripes',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Time Bar Stripes',
+			'If checked, shows animated stripes on the time bar.',
+			'timeBarStripes',
+			'bool');
+		addOption(option);
+
 		var option:Option = new Option('FPS Counter',
 			'If unchecked, hides FPS Counter.',
 			'showFPS',
