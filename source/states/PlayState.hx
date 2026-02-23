@@ -6,7 +6,6 @@ import backend.WeekData;
 import backend.Song;
 import backend.Section;
 import backend.Rating;
-import backend.PrecisionConductor;
 
 import flixel.FlxBasic;
 import flixel.FlxObject;
@@ -1043,9 +1042,7 @@ class PlayState extends MusicBeatState
 			}
 
 			startedCountdown = true;
-			var initTime:Float = -Conductor.crochet * 5;
-			Conductor.songPosition = initTime;
-			PrecisionConductor.setSongTime(initTime);
+			Conductor.songPosition = -Conductor.crochet * 5;
 			setOnScripts('startedCountdown', true);
 			callOnScripts('onCountdownStarted', null);
 
@@ -1295,7 +1292,7 @@ class PlayState extends MusicBeatState
 		#if FLX_PITCH FlxG.sound.music.pitch = playbackRate; #end
 		FlxG.sound.music.play();
 
-		if (time <= vocals.length)
+		if (Conductor.songPosition <= vocals.length)
 		{
 			vocals.time = time;
 			opponentVocals.time = time;
@@ -1306,8 +1303,7 @@ class PlayState extends MusicBeatState
 		}
 		vocals.play();
 		opponentVocals.play();
-		PrecisionConductor.setSongTime(time);
-		Conductor.songPosition = PrecisionConductor.songPosition;
+		Conductor.songPosition = time;
 	}
 
 	public function startNextDialogue() {
@@ -1688,8 +1684,7 @@ class PlayState extends MusicBeatState
 
 		FlxG.sound.music.play();
 		#if FLX_PITCH FlxG.sound.music.pitch = playbackRate; #end
-		PrecisionConductor.setSongTime(FlxG.sound.music.time);
-		Conductor.songPosition = PrecisionConductor.songPosition;
+		Conductor.songPosition = FlxG.sound.music.time;
 		if (Conductor.songPosition <= vocals.length)
 		{
 			vocals.time = Conductor.songPosition;
@@ -1778,21 +1773,14 @@ class PlayState extends MusicBeatState
 		updateIconsPosition();
 
 		if (startedCountdown && !paused)
-		{
-			PrecisionConductor.update(playbackRate);
-			Conductor.songPosition = PrecisionConductor.songPosition;
-		}
+			Conductor.songPosition += FlxG.elapsed * 1000 * playbackRate;
 
 		if (startingSong)
 		{
 			if (startedCountdown && Conductor.songPosition >= 0)
 				startSong();
 			else if(!startedCountdown)
-			{
-				var resetTime:Float = -Conductor.crochet * 5;
-				Conductor.songPosition = resetTime;
-				PrecisionConductor.setSongTime(resetTime);
-			}
+				Conductor.songPosition = -Conductor.crochet * 5;
 		}
 		else if (!paused && updateTime)
 		{
@@ -2368,7 +2356,7 @@ class PlayState extends MusicBeatState
 
 	private function popUpScore(note:Note = null):Void
 	{
-		var noteDiff:Float = note.strumTime - PrecisionConductor.songPosition + ClientPrefs.data.ratingOffset;
+		var noteDiff:Float = note.strumTime - Conductor.songPosition + ClientPrefs.data.ratingOffset;
 		var noteDiffAbs:Float = Math.abs(noteDiff);
 		vocals.volume = 1;
 
@@ -2409,7 +2397,7 @@ class PlayState extends MusicBeatState
 		var score:Int = 350;
 
 		//tryna do MS based judgment due to popular demand
-		var daRating:Rating = PrecisionConductor.judgeNote(ratingsData, noteDiff / playbackRate);
+		var daRating:Rating = Conductor.judgeNote(ratingsData, noteDiff / playbackRate);
 
 		totalNotesHit += daRating.ratingMod;
 		note.ratingMod = daRating.ratingMod;
