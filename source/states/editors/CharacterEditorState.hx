@@ -4,7 +4,6 @@ import flixel.FlxObject;
 import flixel.graphics.FlxGraphic;
 
 import flixel.animation.FlxAnimation;
-import flixel.system.debug.interaction.tools.Pointer.GraphicCursorCross;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.addons.ui.*;
 import flixel.ui.FlxButton;
@@ -102,9 +101,8 @@ class CharacterEditorState extends MusicBeatState
 
 		addCharacter();
 
-		cameraFollowPointer = new FlxSprite().loadGraphic(FlxGraphic.fromClass(GraphicCursorCross));
-		cameraFollowPointer.setGraphicSize(40, 40);
-		cameraFollowPointer.updateHitbox();
+		cameraFollowPointer = new FlxSprite().makeGraphic(40, 40, FlxColor.TRANSPARENT);
+		drawCrossOnSprite(cameraFollowPointer);
 		add(cameraFollowPointer);
 
 		healthBar = new Bar(30, FlxG.height - 75);
@@ -524,6 +522,12 @@ class CharacterEditorState extends MusicBeatState
 		animationDropDown = new FlxUIDropDownMenu(15, animationInputText.y - 55, FlxUIDropDownMenu.makeStrIdLabelArray([''], true), function(pressed:String) {
 			var selectedAnimation:Int = Std.parseInt(pressed);
 			var anim:AnimArray = character.animationsArray[selectedAnimation];
+			if(anim == null) return;
+
+			curAnim = selectedAnimation;
+			character.playAnim(anim.anim, true);
+			updateTextColors();
+
 			animationInputText.text = anim.anim;
 			animationNameInputText.text = anim.name;
 			animationLoopCheckBox.checked = anim.loop;
@@ -1409,5 +1413,24 @@ class CharacterEditorState extends MusicBeatState
 			_file.save(data, '$_char.json');
 			#end
 		}
+	}
+
+	function drawCrossOnSprite(spr:FlxSprite)
+	{
+		var size:Int = 40;
+		var thickness:Int = 2;
+		var halfSize:Int = Std.int(size / 2);
+		var halfThick:Int = Std.int(thickness / 2);
+
+		spr.pixels.lock();
+		for (i in 0...size)
+		{
+			for (t in -halfThick...halfThick + 1)
+			{
+				spr.pixels.setPixel32(halfSize + t, i, FlxColor.WHITE);
+				spr.pixels.setPixel32(i, halfSize + t, FlxColor.WHITE);
+			}
+		}
+		spr.pixels.unlock();
 	}
 }
