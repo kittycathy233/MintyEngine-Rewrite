@@ -22,10 +22,9 @@ function onCreate()
     if shaderId ~= nil then
         debugPrint("Created ShaderToy with ID: " .. shaderId)
         
-        -- Apply the shader to a specific camera layer
-        -- Options: "game", "hud", "other", or "global" (default)
-        applyShaderToyToCamera(shaderId, "game")
-        debugPrint("Applied shader to game layer")
+        -- Apply the shader to the camera
+        applyShaderToyToCamera(shaderId)
+        debugPrint("Applied shader to camera")
     else
         debugPrint("Failed to create ShaderToy")
     end

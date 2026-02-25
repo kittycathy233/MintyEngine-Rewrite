@@ -301,60 +301,39 @@ class ShaderFunctions
 			return false;
 		});
 
-		funk.addLocalCallback("applyShaderToyToCamera", function(shaderId:String, layer:String = "game") {
+		funk.addLocalCallback("applyShaderToyToCamera", function(shaderId:String, cameraType:String) {
 			if(!ClientPrefs.data.shaders) return false;
+
+			// Default to "game" if cameraType is not provided
+			if(cameraType == null || cameraType == "") {
+				cameraType = "game";
+			}
 
 			var shader = shaderToyInstances[shaderId];
 			if(shader != null) {
-				var filter = [new ShaderFilter(shader)];
-				var normalizedLayer = layer.toLowerCase();
+				var targetCamera:Dynamic;
 				
-				// Normalize layer name to handle different formats
-				var processedLayer = normalizedLayer;
-				// Remove "cam" prefix if present
-				if(processedLayer.indexOf("cam") == 0) {
-					processedLayer = processedLayer.substr(3);
+				// Use the existing cameraFromString function for consistency
+				if(cameraType.toLowerCase() == "global") {
+					// Use global camera
+					targetCamera = FlxG.camera;
+				} else if(cameraType.toLowerCase() == "tpad") {
+					// Use Lua touchpad camera
+					targetCamera = PlayState.instance.luaTpadCam;
+				} else {
+					// Use the existing cameraFromString function for other cameras
+					targetCamera = LuaUtils.cameraFromString(cameraType);
 				}
 				
-				switch(processedLayer) {
-					case "game":
-						if(FlxG.gameCamera != null) {
-							FlxG.gameCamera.setFilters(filter);
-						}
-					case "hud":
-						if(FlxG.hudCamera != null) {
-							FlxG.hudCamera.setFilters(filter);
-						}
-					case "other":
-						if(FlxG.otherCamera != null) {
-							FlxG.otherCamera.setFilters(filter);
-						}
-					default: // global or other camera
-						// Check if it's a custom camera name
-						var isCustomCamera = false;
-						
-						// Try to find and use custom camera by name
-						// This is a placeholder for future custom camera support
-						// For now, default to global
-						
-						// Apply to all cameras (global)
-						FlxG.camera.setFilters(filter);
-						if(FlxG.gameCamera != null) {
-							FlxG.gameCamera.setFilters(filter);
-						}
-						if(FlxG.hudCamera != null) {
-							FlxG.hudCamera.setFilters(filter);
-						}
-						if(FlxG.otherCamera != null) {
-							FlxG.otherCamera.setFilters(filter);
-						}
+				if(targetCamera != null) {
+					targetCamera.setFilters([new ShaderFilter(shader)]);
+					return true;
 				}
-				return true;
 			}
 			return false;
 		});
 
-		funk.addLocalCallback("applyShaderToyToSprite", function(spriteName:String, shaderId:String) {
+		funk.addLocalCallback("applyShaderToyToSprite", function(shaderId:String, spriteName:String) {
 			if(!ClientPrefs.data.shaders) return false;
 
 			var shader = shaderToyInstances[shaderId];
