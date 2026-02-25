@@ -10,7 +10,7 @@
     {
       "name": "openfl",
       "type": "haxelib",
-      "version": "9.5.0"
+      "version": "9.3.2"
     },
     {
       "name": "flixel",
@@ -66,6 +66,13 @@
       "dir": null,
       "ref": "cbf91e2180fd2e374924fe74844086aab7891666",
       "url": "https://gitlab.com/haxe-grig/grig.audio.git"
+    },
+    {
+      "name": "flixel-shadertoy-shader",
+      "type": "git",
+      "dir": null,
+      "ref": "master",
+      "url": "https://github.com/kittycathy233/flixel-shadertoy-shader.git"
     },
     {
       "name": "hxWindowColorMode",

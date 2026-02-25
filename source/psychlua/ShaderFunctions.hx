@@ -3,6 +3,14 @@ package psychlua;
 #if (!flash && sys)
 import flixel.addons.display.FlxRuntimeShader;
 #end
+import flixel.input.mouse.FlxMouse;
+import flixel.FlxG;
+import flixel.util.FlxColor;
+import flixel.FlxSprite;
+import openfl.filters.ShaderFilter;
+import FlxShaderToyHack;
+import psychlua.LuaUtils;
+import backend.ClientPrefs;
 
 class ShaderFunctions
 {
@@ -262,6 +270,118 @@ class ShaderFunctions
 			FunkinLua.luaTrace("setShaderSampler2D: Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			return false;
 			#end
+		});
+
+		// ShaderToyHack support
+		var shaderToyInstances:Map<String, Dynamic> = new Map();
+		var shaderToyCounter:Int = 0;
+
+		funk.addLocalCallback("createShaderToy", function(shaderCode:String) {
+			if(!ClientPrefs.data.shaders) return null;
+
+			try {
+				var shader = new FlxShaderToyHack(shaderCode);
+				var id = "shadertoy_" + shaderToyCounter++;
+				shaderToyInstances[id] = shader;
+				return id;
+			} catch(e:Dynamic) {
+				FunkinLua.luaTrace("createShaderToy: Error creating shader: " + e, false, false, FlxColor.RED);
+				return null;
+			}
+		});
+
+		funk.addLocalCallback("updateShaderToy", function(shaderId:String) {
+			if(!ClientPrefs.data.shaders) return false;
+
+			var shader = shaderToyInstances[shaderId];
+			if(shader != null) {
+				shader.update(FlxG.elapsed, FlxG.mouse);
+				return true;
+			}
+			return false;
+		});
+
+		funk.addLocalCallback("applyShaderToyToCamera", function(shaderId:String, layer:String = "game") {
+			if(!ClientPrefs.data.shaders) return false;
+
+			var shader = shaderToyInstances[shaderId];
+			if(shader != null) {
+				var filter = [new ShaderFilter(shader)];
+				var normalizedLayer = layer.toLowerCase();
+				
+				// Normalize layer name to handle different formats
+				var processedLayer = normalizedLayer;
+				// Remove "cam" prefix if present
+				if(processedLayer.indexOf("cam") == 0) {
+					processedLayer = processedLayer.substr(3);
+				}
+				
+				switch(processedLayer) {
+					case "game":
+						if(FlxG.gameCamera != null) {
+							FlxG.gameCamera.setFilters(filter);
+						}
+					case "hud":
+						if(FlxG.hudCamera != null) {
+							FlxG.hudCamera.setFilters(filter);
+						}
+					case "other":
+						if(FlxG.otherCamera != null) {
+							FlxG.otherCamera.setFilters(filter);
+						}
+					default: // global or other camera
+						// Check if it's a custom camera name
+						var isCustomCamera = false;
+						
+						// Try to find and use custom camera by name
+						// This is a placeholder for future custom camera support
+						// For now, default to global
+						
+						// Apply to all cameras (global)
+						FlxG.camera.setFilters(filter);
+						if(FlxG.gameCamera != null) {
+							FlxG.gameCamera.setFilters(filter);
+						}
+						if(FlxG.hudCamera != null) {
+							FlxG.hudCamera.setFilters(filter);
+						}
+						if(FlxG.otherCamera != null) {
+							FlxG.otherCamera.setFilters(filter);
+						}
+				}
+				return true;
+			}
+			return false;
+		});
+
+		funk.addLocalCallback("applyShaderToyToSprite", function(spriteName:String, shaderId:String) {
+			if(!ClientPrefs.data.shaders) return false;
+
+			var shader = shaderToyInstances[shaderId];
+			if(shader != null) {
+					var split:Array<String> = spriteName.split('.');
+					var leObj = LuaUtils.getObjectDirectly(split[0]);
+					if(split.length > 1) {
+						leObj = LuaUtils.getVarInArray(LuaUtils.getPropertyLoop(split), split[split.length-1]);
+					}
+
+					if(leObj != null) {
+						var sprite:FlxSprite = cast leObj;
+						if(sprite != null) {
+							sprite.shader = shader;
+							return true;
+						}
+					}
+			}
+			return false;
+		});
+
+		funk.addLocalCallback("destroyShaderToy", function(shaderId:String) {
+			if(shaderToyInstances.exists(shaderId)) {
+				shaderToyInstances.remove(shaderId);
+				return true;
+			}
+			return false;
 		});
 	}
 	
