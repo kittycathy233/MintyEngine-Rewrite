@@ -33,7 +33,7 @@ import lime.graphics.Image;
 
 class Main extends Sprite
 {
-	var game = {
+	public static final game = {
 		width: 1280, // WINDOW width
 		height: 720, // WINDOW height
 		initialState: TitleState, // initial game state
@@ -65,6 +65,11 @@ class Main extends Sprite
 	public function new()
 	{
 		super();
+
+		#if (cpp && windows)
+		backend.Native.fixScaling();
+		#end
+
 		#if mobile
 		#if android
 		StorageUtil.requestPermissions();
@@ -72,15 +77,6 @@ class Main extends Sprite
 		Sys.setCwd(StorageUtil.getStorageDirectory());
 		#end
 		backend.CrashHandler.init();
-
-		#if windows
-		@:functionCode("
-		#include <windows.h>
-		#include <winuser.h>
-		setProcessDPIAware() // allows for more crisp visuals
-		DisableProcessWindowsGhosting() // lets you move the window and such if it's not responding
-		")
-		#end
 
 		if (stage != null)
 		{
